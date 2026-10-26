@@ -1,0 +1,33 @@
+{
+  "name": "creep",
+  "seed": 303,
+  "steps": 100,
+  "frames": 180,
+  "joints": 30,
+  "prompt": "A heavy crouching creature walks straight forward continuously in a deliberate predatory gait. Its feet stay separated, knees bent and broad torso leaning forward. It takes alternating steps with both legs, placing each foot firmly before shifting its weight over it. Its elbows are held outward and hands hover away from the thighs. The head is lowered and shoulders move slowly against the hips. It covers ground steadily without stopping, creeping with purposeful heavy steps.",
+  "promptFile": "tools/kimodo_guardiao/prompts/creep_s303.txt",
+  "protocol": "8\t100\t303\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_guardiao\\raw\\creep_s303\t180\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_guardiao\\prompts\\creep_s303.txt",
+  "elapsedSeconds": 6.594,
+  "generatedUtc": "2026-10-01T22:37:30Z",
+  "backend": "vulkan",
+  "textLayerChunk": 32,
+  "motionLayerChunk": 8,
+  "models": {
+    "executable": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\build\\debug\\kmd-generate.exe",
+      "sha256": "156edbaa3d2066e53a774c414b04676a648d134ab94a260be6c664d21270401d"
+    },
+    "motionModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\models\\kimodo-soma-rp-v1.1-f32.gguf",
+      "sha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4"
+    },
+    "textModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\Llama-3-Kimodo-Q8_0.gguf",
+      "sha256": "b26d0e74b115b33a7f2df5aca04426548365e99217cd590986f8abc4172e4c5c"
+    }
+  },
+  "streams": {
+    "root_positions.f32": "4de52c483df0afab3ef20b0425e096afb5d69d6589f156932c8696d5a7b8d919",
+    "local_rotations_xyzw.f32": "e78a55593c5583ede26c9aed74f499c63541bc151c3501a5b04e006defd1e7ef"
+  }
+}

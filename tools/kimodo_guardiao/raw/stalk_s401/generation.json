@@ -1,0 +1,32 @@
+{
+  "name": "stalk",
+  "seed": 401,
+  "steps": 100,
+  "frames": 180,
+  "joints": 30,
+  "prompt": "A heavy hulking creature stalks forward in slow deliberate alternating steps, crouching slightly, head lowered. Its elbows are bent and held far outward and hands hover away from its legs. The feet are set apart, each foot stays planted while weight rolls onto it, then the other foot reaches forward. The upper body is tense and still with small asymmetrical shoulder rolls. Continuous predatory stalking, menacing and grounded.",
+  "protocol": "8\t100\t401\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_guardiao\\raw\\stalk_s401\t180\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_guardiao\\prompts\\stalk.txt",
+  "elapsedSeconds": 21.766,
+  "generatedUtc": "2026-10-01T22:31:47Z",
+  "backend": "vulkan",
+  "textLayerChunk": 8,
+  "motionLayerChunk": 8,
+  "models": {
+    "executable": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\build\\debug\\kmd-generate.exe",
+      "sha256": "156edbaa3d2066e53a774c414b04676a648d134ab94a260be6c664d21270401d"
+    },
+    "motionModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\models\\kimodo-soma-rp-v1.1-f32.gguf",
+      "sha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4"
+    },
+    "textModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\Llama-3-Kimodo-Q8_0.gguf",
+      "sha256": "b26d0e74b115b33a7f2df5aca04426548365e99217cd590986f8abc4172e4c5c"
+    }
+  },
+  "streams": {
+    "root_positions.f32": "853bb23258aff3716cf92e59ba44c90ebe404cf4b8889e8dab387460d618508a",
+    "local_rotations_xyzw.f32": "5f7bb5ed9c1a432b65c0f3f072c751e5a5fd53c926507a893348d3e21187ad06"
+  }
+}

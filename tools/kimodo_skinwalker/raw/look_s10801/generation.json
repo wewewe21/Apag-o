@@ -1,0 +1,35 @@
+{
+  "name": "look",
+  "seed": 10801,
+  "steps": 100,
+  "frames": 180,
+  "joints": 30,
+  "profile": "skinwalker",
+  "prompt": "A gaunt hunched crooked humanoid stands with narrow planted feet and bent knees. Its head first tilts unnaturally to the left and turns to look behind that shoulder, the rounded upper spine following slowly. It pauses, then turns its head to the right and scans there before looking ahead again. The long neck reaches low out of sharply hunched uneven shoulders, long thin arms hanging slack with tense claw hands. Delayed upper body twists and eerie head tilts, feet staying planted throughout.",
+  "promptFile": "tools/kimodo_skinwalker/prompts/look_s10801.txt",
+  "protocol": "8\t100\t10801\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_skinwalker\\raw\\look_s10801\t180\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_skinwalker\\prompts\\look_s10801.txt",
+  "elapsedSeconds": 6.328,
+  "generatedUtc": "2026-10-02T01:23:42Z",
+  "backend": "vulkan",
+  "textLayerChunk": 32,
+  "textResidentLimitMiB": 9000,
+  "motionLayerChunk": 8,
+  "models": {
+    "executable": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\build\\debug\\kmd-generate.exe",
+      "sha256": "156edbaa3d2066e53a774c414b04676a648d134ab94a260be6c664d21270401d"
+    },
+    "motionModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\models\\kimodo-soma-rp-v1.1-f32.gguf",
+      "sha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4"
+    },
+    "textModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\Llama-3-Kimodo-Q8_0.gguf",
+      "sha256": "b26d0e74b115b33a7f2df5aca04426548365e99217cd590986f8abc4172e4c5c"
+    }
+  },
+  "streams": {
+    "root_positions.f32": "7024a07ddd72480caabc94d56529a2b438fb2dc6e214d344304ef219baf459cf",
+    "local_rotations_xyzw.f32": "44162414534a6b47f53eeb427e75b63299eb9a84d8dc77cc483dec7546a5a46c"
+  }
+}

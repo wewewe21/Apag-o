@@ -1,0 +1,32 @@
+{
+  "name": "inspect",
+  "seed": 901,
+  "steps": 100,
+  "frames": 120,
+  "joints": 30,
+  "prompt": "A huge heavy creature stands with feet wide apart and elbows bent outward. It slowly bends the knees and lowers its broad torso toward the ground in front of it, reaching one hand forward as if examining something, while the other arm stays out for balance. It pauses, draws the hand back, and rises slowly into its original planted stance. Heavy deliberate curious movement, head leading and shoulders following.",
+  "protocol": "8\t100\t901\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_guardiao\\raw\\inspect_s901\t120\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_guardiao\\prompts\\inspect.txt",
+  "elapsedSeconds": 20.375,
+  "generatedUtc": "2026-10-01T22:34:36Z",
+  "backend": "vulkan",
+  "textLayerChunk": 8,
+  "motionLayerChunk": 8,
+  "models": {
+    "executable": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\build\\debug\\kmd-generate.exe",
+      "sha256": "156edbaa3d2066e53a774c414b04676a648d134ab94a260be6c664d21270401d"
+    },
+    "motionModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\models\\kimodo-soma-rp-v1.1-f32.gguf",
+      "sha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4"
+    },
+    "textModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\Llama-3-Kimodo-Q8_0.gguf",
+      "sha256": "b26d0e74b115b33a7f2df5aca04426548365e99217cd590986f8abc4172e4c5c"
+    }
+  },
+  "streams": {
+    "root_positions.f32": "f5d6d7353d303e9f9bc4e91aea573d18760579279d06c3b1e3dd5845750435f1",
+    "local_rotations_xyzw.f32": "c25ef5333780d096b86e20f8062d906310fb2f33fc13ed87aff29332bfee3c35"
+  }
+}

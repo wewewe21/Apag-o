@@ -1,0 +1,33 @@
+{
+  "name": "apagao",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "APAGAO - terror em primeira pessoa (three.js) com cooperativo online",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "audio:plan": "node tools/audio/generate.mjs --plan",
+    "audio:generate": "node tools/audio/generate.mjs",
+    "audio:verify": "node tools/audio/verify.mjs",
+    "audio:test": "node tools/test/audio-test.mjs && node tools/test/footsteps-test.mjs && node tools/audio/check-pipeline.mjs",
+    "assets3d:plan": "node tools/tripo/run.mjs plan",
+    "assets3d:generate": "node tools/tripo/run.mjs generate",
+    "assets3d:process": "python -I tools/tripo/process.py",
+    "haunt:test": "node tools/test/child-ward-test.mjs && node tools/test/paranoia-test.mjs && node tools/test/haunting-test.mjs",
+    "start": "node server/index.js",
+    "build": "node scripts/gen-worldspec.mjs && node scripts/build-client.mjs",
+    "build:server": "node scripts/gen-worldspec.mjs",
+    "build:client": "node scripts/build-client.mjs",
+    "dev:client": "python tools/serve.py 8765",
+    "test": "node tools/test_layout.mjs && node tools/test/run-all.mjs"
+  },
+  "dependencies": {
+    "three": "0.170.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "onnxruntime-web": "1.18.0"
+  }
+}

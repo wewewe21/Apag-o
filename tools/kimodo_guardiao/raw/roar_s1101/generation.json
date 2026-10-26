@@ -1,0 +1,32 @@
+{
+  "name": "roar",
+  "seed": 1101,
+  "steps": 100,
+  "frames": 120,
+  "joints": 30,
+  "prompt": "A huge heavy creature stands with feet far apart and bent knees, arms spread outward. It slowly pulls its shoulders back, raises its chest and head, then throws its head upward in a powerful roar while the bent arms tense wide. The body trembles briefly under the exertion, then the head lowers and the massive shoulders settle back into a hunched stance. A single heavy threatening display without walking.",
+  "protocol": "8\t100\t1101\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_guardiao\\raw\\roar_s1101\t120\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_guardiao\\prompts\\roar.txt",
+  "elapsedSeconds": 20.313,
+  "generatedUtc": "2026-10-01T22:35:16Z",
+  "backend": "vulkan",
+  "textLayerChunk": 8,
+  "motionLayerChunk": 8,
+  "models": {
+    "executable": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\build\\debug\\kmd-generate.exe",
+      "sha256": "156edbaa3d2066e53a774c414b04676a648d134ab94a260be6c664d21270401d"
+    },
+    "motionModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\models\\kimodo-soma-rp-v1.1-f32.gguf",
+      "sha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4"
+    },
+    "textModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\Llama-3-Kimodo-Q8_0.gguf",
+      "sha256": "b26d0e74b115b33a7f2df5aca04426548365e99217cd590986f8abc4172e4c5c"
+    }
+  },
+  "streams": {
+    "root_positions.f32": "7c96b68b19690d7fe820106f9be802affede7f99428be7d211645ff83f56c48c",
+    "local_rotations_xyzw.f32": "cbf5de5cfff9b5480c610ad57685b106fe044c5cce171dba104756d6f4df49df"
+  }
+}

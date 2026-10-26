@@ -1,0 +1,32 @@
+{
+  "name": "idle",
+  "seed": 701,
+  "steps": 100,
+  "frames": 150,
+  "joints": 30,
+  "prompt": "A massive heavy creature stands almost still with feet wide apart and knees slightly bent. Both elbows remain bent and spread away from the broad torso, heavy hands held clear of the thighs. The lowered head faces forward. It breathes slowly with a subtle rising chest, one shoulder settling slightly lower than the other. Small tense weight shifts without stepping, a menacing restrained idle stance.",
+  "protocol": "8\t100\t701\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_guardiao\\raw\\idle_s701\t150\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_guardiao\\prompts\\idle.txt",
+  "elapsedSeconds": 20.625,
+  "generatedUtc": "2026-10-01T22:33:55Z",
+  "backend": "vulkan",
+  "textLayerChunk": 8,
+  "motionLayerChunk": 8,
+  "models": {
+    "executable": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\build\\debug\\kmd-generate.exe",
+      "sha256": "156edbaa3d2066e53a774c414b04676a648d134ab94a260be6c664d21270401d"
+    },
+    "motionModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\models\\kimodo-soma-rp-v1.1-f32.gguf",
+      "sha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4"
+    },
+    "textModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\Llama-3-Kimodo-Q8_0.gguf",
+      "sha256": "b26d0e74b115b33a7f2df5aca04426548365e99217cd590986f8abc4172e4c5c"
+    }
+  },
+  "streams": {
+    "root_positions.f32": "d99fcde7dad36cb981cead733b06e2856a2471e0401f2581edded6a4482f3a1d",
+    "local_rotations_xyzw.f32": "8cfb6a8fc4389fd19137cb3393d302b0e058a1af1938c865e73fd018e3f73977"
+  }
+}

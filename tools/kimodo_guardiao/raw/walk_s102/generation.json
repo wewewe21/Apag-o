@@ -1,0 +1,32 @@
+{
+  "name": "walk",
+  "seed": 102,
+  "steps": 100,
+  "frames": 180,
+  "joints": 30,
+  "prompt": "A massive heavy creature walks slowly forward with a wide stance. The torso is broad and hunched slightly forward. Both elbows stay bent and spread outward, hands hanging away from the thighs. Each foot is lifted just enough to take a short deliberate step, then planted firmly. The body weight shifts visibly from side to side over the supporting leg, the shoulders lag behind the hips and settle after each heavy footfall. The head stays low and stares ahead. Continuous ponderous forward walking, balanced and grounded.",
+  "protocol": "8\t100\t102\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_guardiao\\raw\\walk_s102\t180\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_guardiao\\prompts\\walk.txt",
+  "elapsedSeconds": 21.156,
+  "generatedUtc": "2026-10-01T22:29:14Z",
+  "backend": "vulkan",
+  "textLayerChunk": 8,
+  "motionLayerChunk": 8,
+  "models": {
+    "executable": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\build\\debug\\kmd-generate.exe",
+      "sha256": "156edbaa3d2066e53a774c414b04676a648d134ab94a260be6c664d21270401d"
+    },
+    "motionModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\models\\kimodo-soma-rp-v1.1-f32.gguf",
+      "sha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4"
+    },
+    "textModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\Llama-3-Kimodo-Q8_0.gguf",
+      "sha256": "b26d0e74b115b33a7f2df5aca04426548365e99217cd590986f8abc4172e4c5c"
+    }
+  },
+  "streams": {
+    "root_positions.f32": "beb7c133623af41efced5b048398b7ee4c303b78f6b97f79e5376eb38fd28b21",
+    "local_rotations_xyzw.f32": "241ba651124e45ed0425fcd17de51114ea86b22e821c6ff1855c0091aff9b698"
+  }
+}

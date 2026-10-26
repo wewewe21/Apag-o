@@ -1,0 +1,35 @@
+{
+  "name": "creep",
+  "seed": 10302,
+  "steps": 100,
+  "frames": 240,
+  "joints": 30,
+  "profile": "skinwalker",
+  "prompt": "A gaunt twisted humanoid creeps continuously straight forward in a deeply hunched crouch. It takes slow clear alternating steps with both legs, each knee bending and foot reaching before the weight transfers onto it. The feet are narrowly separated and the hips stay low. Its spine rounds strongly forward, long neck stretched ahead and head tilted sideways, one shoulder lower than the other. Thin arms hang low with bent elbows, tense claw hands hovering close to the floor. Its chest rolls slowly out of rhythm with the hips as it advances without stopping. An uncanny cautious stalking creep with complete alternating steps and grounded foot placements.",
+  "promptFile": "tools/kimodo_skinwalker/prompts/creep_s10302.txt",
+  "protocol": "8\t100\t10302\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_skinwalker\\raw\\creep_s10302\t240\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_skinwalker\\prompts\\creep_s10302.txt",
+  "elapsedSeconds": 8.266,
+  "generatedUtc": "2026-10-02T01:22:25Z",
+  "backend": "vulkan",
+  "textLayerChunk": 32,
+  "textResidentLimitMiB": 9000,
+  "motionLayerChunk": 8,
+  "models": {
+    "executable": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\build\\debug\\kmd-generate.exe",
+      "sha256": "156edbaa3d2066e53a774c414b04676a648d134ab94a260be6c664d21270401d"
+    },
+    "motionModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\models\\kimodo-soma-rp-v1.1-f32.gguf",
+      "sha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4"
+    },
+    "textModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\Llama-3-Kimodo-Q8_0.gguf",
+      "sha256": "b26d0e74b115b33a7f2df5aca04426548365e99217cd590986f8abc4172e4c5c"
+    }
+  },
+  "streams": {
+    "root_positions.f32": "1472fcb8a614f310b6d2985263b75f2e781cb0f3d95493090e583943d100e5c3",
+    "local_rotations_xyzw.f32": "98aa0904dfe6e3a6580d6871054887ca6c0f3d7c162df24cc8d205f57d039424"
+  }
+}

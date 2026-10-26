@@ -1,0 +1,16 @@
+# Blueprint opcional do Render (New > Blueprint). Cria so o servidor multiplayer, no plano gratuito. Nao contem segredos.
+services:
+  - type: web
+    name: apagao-server
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "20"
+      - key: ALLOWED_ORIGINS        # o Render pergunta no painel: https://SEU-USUARIO.github.io
+        sync: false

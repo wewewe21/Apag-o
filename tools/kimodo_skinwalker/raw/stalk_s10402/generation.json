@@ -1,0 +1,35 @@
+{
+  "name": "stalk",
+  "seed": 10402,
+  "steps": 100,
+  "frames": 240,
+  "joints": 30,
+  "profile": "skinwalker",
+  "prompt": "A thin crooked humanoid creature stalks continuously straight forward with deliberate alternating steps. The upper back is sharply hunched, head low and tilted to the right, neck extending ahead. One shoulder trails behind the other as the narrow torso twists. Both knees bend, one foot reaches past the other and plants, then the opposite foot advances, continuously covering ground. Long arms hang slack beside the body with the elbows slightly bent and clawlike hands tense. The shoulders and spine settle a little later than each quiet footfall. An eerie asymmetric stalking walk, alert, grounded and uninterrupted.",
+  "promptFile": "tools/kimodo_skinwalker/prompts/stalk_s10402.txt",
+  "protocol": "8\t100\t10402\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_skinwalker\\raw\\stalk_s10402\t240\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_skinwalker\\prompts\\stalk_s10402.txt",
+  "elapsedSeconds": 8.235,
+  "generatedUtc": "2026-10-02T01:22:42Z",
+  "backend": "vulkan",
+  "textLayerChunk": 32,
+  "textResidentLimitMiB": 9000,
+  "motionLayerChunk": 8,
+  "models": {
+    "executable": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\build\\debug\\kmd-generate.exe",
+      "sha256": "156edbaa3d2066e53a774c414b04676a648d134ab94a260be6c664d21270401d"
+    },
+    "motionModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\models\\kimodo-soma-rp-v1.1-f32.gguf",
+      "sha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4"
+    },
+    "textModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\Llama-3-Kimodo-Q8_0.gguf",
+      "sha256": "b26d0e74b115b33a7f2df5aca04426548365e99217cd590986f8abc4172e4c5c"
+    }
+  },
+  "streams": {
+    "root_positions.f32": "d6acd223a93d2ad26e949e87156e104195ba3140273837ac0c93bbfa7b28c6fe",
+    "local_rotations_xyzw.f32": "114780f09ad3d269c3c511f06ab807abbe96661decd66528d92be65951b46ef8"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "walk",
+  "seed": 106,
+  "steps": 100,
+  "frames": 180,
+  "joints": 30,
+  "prompt": "A hulking creature walks continuously straight forward at a brisk walking pace. It takes long strong alternating heel-to-toe strides with feet spaced wide apart and knees slightly bent, covering ground without pausing. Its massive torso leans forward a little, hips shift onto each supporting foot and heavy shoulders roll with delayed weight. Both elbows stay bent and spread out to the sides, hands hanging well away from the thighs with restrained arm swings. Head lowered and fixed ahead. Continuous powerful lumbering walking, each step landing heavily and decisively.",
+  "promptFile": "tools/kimodo_guardiao/prompts/walk_s106.txt",
+  "protocol": "8\t100\t106\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_guardiao\\raw\\walk_s106\t180\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_guardiao\\prompts\\walk_s106.txt",
+  "elapsedSeconds": 7.391,
+  "generatedUtc": "2026-10-01T22:37:03Z",
+  "backend": "vulkan",
+  "textLayerChunk": 32,
+  "motionLayerChunk": 8,
+  "models": {
+    "executable": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\build\\debug\\kmd-generate.exe",
+      "sha256": "156edbaa3d2066e53a774c414b04676a648d134ab94a260be6c664d21270401d"
+    },
+    "motionModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\models\\kimodo-soma-rp-v1.1-f32.gguf",
+      "sha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4"
+    },
+    "textModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\Llama-3-Kimodo-Q8_0.gguf",
+      "sha256": "b26d0e74b115b33a7f2df5aca04426548365e99217cd590986f8abc4172e4c5c"
+    }
+  },
+  "streams": {
+    "root_positions.f32": "187f22f06a0462859a097999215cbb1b28a503dfae081553c768a4a1aefc766b",
+    "local_rotations_xyzw.f32": "3175a0349886fda797f4e300bd327ab7305852b693d21ba93ca1a0790dabe878"
+  }
+}

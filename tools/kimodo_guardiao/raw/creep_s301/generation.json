@@ -1,0 +1,32 @@
+{
+  "name": "creep",
+  "seed": 301,
+  "steps": 100,
+  "frames": 180,
+  "joints": 30,
+  "prompt": "A large heavy creature creeps forward extremely slowly in a broad crouched stance. Bent knees, torso leaning forward, elbows held wide, hands extended low and away from the knees. It carefully transfers all its weight onto one leg before taking a short low step with the other. The head stays still and lowered, the shoulders roll slowly and the spine moves like a stalking predator. Continuous tense controlled forward creeping with planted feet.",
+  "protocol": "8\t100\t301\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_guardiao\\raw\\creep_s301\t180\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_guardiao\\prompts\\creep.txt",
+  "elapsedSeconds": 25.422,
+  "generatedUtc": "2026-10-01T22:31:03Z",
+  "backend": "vulkan",
+  "textLayerChunk": 8,
+  "motionLayerChunk": 8,
+  "models": {
+    "executable": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\build\\debug\\kmd-generate.exe",
+      "sha256": "156edbaa3d2066e53a774c414b04676a648d134ab94a260be6c664d21270401d"
+    },
+    "motionModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\models\\kimodo-soma-rp-v1.1-f32.gguf",
+      "sha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4"
+    },
+    "textModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\Llama-3-Kimodo-Q8_0.gguf",
+      "sha256": "b26d0e74b115b33a7f2df5aca04426548365e99217cd590986f8abc4172e4c5c"
+    }
+  },
+  "streams": {
+    "root_positions.f32": "5dfc55cee6ce7c5da3003ae50a97ffbd609d2ff529267b5ffc777ff8a19df8a3",
+    "local_rotations_xyzw.f32": "8b2495bdcc035621c61e73bdba057e3d8e743484f10cfbe48a4aef13f98ff1c8"
+  }
+}

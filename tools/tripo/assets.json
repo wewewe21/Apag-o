@@ -1,0 +1,223 @@
+{
+  "_comment": "Assets 3D a gerar com o Tripo (texto -> modelo). A ordem e a prioridade: impacto visual por credito. Nada aqui contem a chave da API (ela vem de TRIPO_API_KEY). Tamanhos em metros no mundo do jogo; frente do modelo no jogo = +Z, origem no centro da base. 'replaces' sao os tipos que o mundo troca (ver src/world/models.js).",
+  "style": "heavily weathered abandoned 1990s Brazilian public psychiatric hospital equipment, decayed and filthy, peeling paint, rust, grime and old stains, cold desaturated grey-green color palette, realistic proportions, horror game prop, single object, isolated on a plain background, no floor, no shadow",
+  "negative": "cartoon, stylized, toy, bright saturated colors, clean, brand new, glossy plastic, text, logo, watermark, multiple objects, ground, floor, platform, base, background, people, hands, low poly",
+  "defaults": {
+    "face_limit": 14000,
+    "texture": true,
+    "pbr": false,
+    "texture_quality": "standard",
+    "maxTexture": 1024
+  },
+  "assets": [
+    {
+      "id": "hospital_bed",
+      "priority": 1,
+      "why": "15 camas (enfermaria e ala de pacientes): o objeto mais repetido e iconico do jogo; hoje e so tubos e uma caixa",
+      "prompt": "Old metal hospital bed with a thin stained mattress and a crumpled dirty grey sheet, rusty tubular steel frame with bars at the head and at the foot, small caster wheels, three quarter view",
+      "size": {
+        "w": 0.95,
+        "h": 1.05,
+        "d": 2.05
+      },
+      "yaw": -90,
+      "replaces": [
+        "bed:ward",
+        "bed:bed"
+      ],
+      "material": {
+        "rough": 0.85,
+        "metal": 0.15,
+        "tint": "0xb4bab2"
+      }
+    },
+    {
+      "id": "wheelchair",
+      "priority": 2,
+      "why": "aparece nos corredores, subsolo e alas; a cadeira de rodas atual e um conjunto de aros e caixas",
+      "prompt": "Abandoned old hospital wheelchair, rusted chrome frame, torn black vinyl seat and backrest with exposed foam, two large rear wheels with push rims, two small front caster wheels, folding footrests",
+      "size": {
+        "w": 0.66,
+        "h": 0.95,
+        "d": 1.0
+      },
+      "yaw": 90,
+      "replaces": [
+        "wheelchair"
+      ],
+      "material": {
+        "rough": 0.7,
+        "metal": 0.2,
+        "tint": "0xb0b6b0"
+      }
+    },
+    {
+      "id": "gurney",
+      "priority": 3,
+      "why": "macas do necrotério e do depósito de corpos (e sorteadas nos corredores)",
+      "prompt": "Flat hospital stretcher gurney trolley, a perfectly horizontal flat thin worn vinyl mattress pad lying level on a stainless steel frame, long rectangular shape about two meters long and seventy centimeters wide, four swivel wheels, low side rails, no raised backrest, scratched and stained, empty",
+      "_nota": "a 1a versao (so 'old hospital stretcher...') veio com o encosto levantado como cadeira: curta, alta e o corpo atravessaria o encosto; esta e a 2a geracao. fit exact: o modelo e baixo e curto; estica altura e comprimento quase igual (rodas continuam redondas de lado). overlayY = altura do colchao do modelo (0,62) - 0,86 do prop procedural",
+      "size": {
+        "w": 0.7,
+        "h": 0.85,
+        "d": 1.95
+      },
+      "fit": "exact",
+      "overlayY": -0.24,
+      "replaces": [
+        "gurney"
+      ],
+      "keepOverlay": true,
+      "material": {
+        "rough": 0.6,
+        "metal": 0.25,
+        "tint": "0xaeb4b0"
+      }
+    },
+    {
+      "id": "covered_body",
+      "priority": 4,
+      "why": "o corpo coberto nas macas hoje e feito de elipsoides lisos: a forma sob o lencol e o que mais pesa no susto do necrotério",
+      "prompt": "Corpse lying flat on its back completely covered by a thin stained off white cloth sheet, only the human body shape under the cloth, head shoulders chest hips and legs, bare feet sticking out at the end with a paper toe tag. Lying directly on the ground, no stretcher, no table, no bed, no furniture, no base, no pedestal",
+      "style_override": "heavily weathered abandoned 1990s Brazilian public psychiatric hospital morgue prop, decayed and filthy, old stains, cold desaturated grey-green color palette, realistic proportions, horror game prop, single object, isolated on a plain background, no floor, no shadow",
+      "_nota": "a 1a versao ('...stained off white hospital sheet... morgue') veio com uma maca embutida (corpo sobre maca, minusculo); esta e a 2a geracao, sem base. Mais larga que um corpo real: fit exact para esticar o comprimento",
+      "size": {
+        "w": 0.58,
+        "h": 0.3,
+        "d": 1.75
+      },
+      "fit": "exact",
+      "replaces": [
+        "cadaver"
+      ],
+      "material": {
+        "rough": 0.95,
+        "metal": 0.0,
+        "tint": "0xc2c4bc",
+        "doubleSided": true
+      }
+    },
+    {
+      "id": "autopsy_table",
+      "priority": 5,
+      "why": "peca central da sala de autopsia (2 mesas)",
+      "prompt": "Long flat stainless steel morgue autopsy table, a very long and narrow rectangular tabletop about two meters long and seventy centimeters wide, perfectly flat and horizontal with a slightly raised rim, one drain hole at the foot end, standing on a simple single column pedestal base, table height about ninety centimeters, scratched dull steel with old brown stains, empty, no body, no tilt",
+      "_nota": "a 1a versao ('...raised edges and a drain hole, single column pedestal...') saiu com o tampo inclinado e curto (1,09 m): nao serve para o corpo sobreposto; esta e a 2a geracao. O modelo e baixo (L:A = 3,6:1): fit exact estica so a altura (pedestal liso)",
+      "size": {
+        "w": 0.8,
+        "h": 0.88,
+        "d": 2.1
+      },
+      "fit": "exact",
+      "yaw": 90,
+      "replaces": [
+        "autopsyTable"
+      ],
+      "keepOverlay": true,
+      "material": {
+        "rough": 0.45,
+        "metal": 0.3,
+        "tint": "0xb9bfbc"
+      }
+    },
+    {
+      "id": "restraint_chair",
+      "priority": 6,
+      "why": "Ala Noturna: a cadeira de contencao e o objeto mais macabro do subsolo",
+      "prompt": "Antique asylum restraint chair made of dark wood and rusty iron, high back, thick leather straps with buckles for wrists ankles and chest, a metal headrest clamp, grimy",
+      "size": {
+        "w": 0.62,
+        "h": 1.7,
+        "d": 0.7
+      },
+      "replaces": [
+        "restraint"
+      ],
+      "material": {
+        "rough": 0.8,
+        "metal": 0.2,
+        "tint": "0xa8aca6"
+      }
+    },
+    {
+      "id": "iv_stand",
+      "priority": 7,
+      "why": "enfermaria (3 sorteados) e corredor",
+      "prompt": "Medical IV drip stand pole with a five leg wheeled base and a hook crossbar holding an empty cloudy IV fluid bag with a thin tube, old rusty chrome, dusty",
+      "size": {
+        "w": 0.55,
+        "h": 1.9,
+        "d": 0.55
+      },
+      "replaces": [
+        "iv"
+      ],
+      "material": {
+        "rough": 0.55,
+        "metal": 0.25,
+        "tint": "0xb4b8b6"
+      }
+    },
+    {
+      "id": "medical_cart",
+      "priority": 8,
+      "why": "carrinho da enfermaria (instrumentos sobre o tampo)",
+      "prompt": "Tall narrow hospital instrument trolley, vertical proportions, about ninety centimeters tall and only about sixty centimeters long and forty five wide, two stainless steel shelves with raised rims, a push handle on one short end, four small swivel caster wheels, a few dusty surgical instruments and an old kidney tray on the top shelf, rusty and stained",
+      "_nota": "a 1a versao ('Old rusty medical instrument trolley cart...') saiu baixa e comprida (0,56 m): os itens do jogo ficam a 0,855 m em cima do carrinho e flutuariam; esta e a 2a geracao. Escala uniforme para a bandeja (0,6 no modelo) ficar a 0,855 m: sobra ~0,14 m por ponta alem da pegada de colisao 0,66 (grow 1,45); res.top e as superficies nao mudam (servidor identico)",
+      "size": {
+        "w": 0.94,
+        "h": 0.94,
+        "d": 0.5
+      },
+      "grow": 1.45,
+      "replaces": [
+        "cart"
+      ],
+      "material": {
+        "rough": 0.55,
+        "metal": 0.25,
+        "tint": "0xb2b8b4"
+      }
+    }
+  ],
+  "later": [
+    {
+      "id": "broken_doll",
+      "why": "quarto de crianca (ala de pacientes): a boneca e feita de esferas; forma humana pequena e o que mais incomoda de perto",
+      "prompt": "Creepy antique porcelain doll sitting, cracked pale face, one missing eye socket, matted hair, filthy torn old fashioned dress, small, horror",
+      "size": {
+        "w": 0.24,
+        "h": 0.36,
+        "d": 0.24
+      },
+      "replaces": [
+        "doll"
+      ],
+      "material": {
+        "rough": 0.5,
+        "metal": 0.0,
+        "tint": "0xc0beb4"
+      },
+      "blocked_by": "o quarto de crianca (src/world/child-ward.js) junta tudo por material e os testes de assombracao dependem de nomes e limites das pecas; integrar com cuidado"
+    },
+    {
+      "id": "rocking_horse",
+      "why": "quarto de crianca: cavalinho de balanco quebrado",
+      "prompt": "Broken antique wooden rocking horse with peeling paint, one snapped runner, faded and dirty, small child size",
+      "size": {
+        "w": 0.3,
+        "h": 0.55,
+        "d": 0.62
+      },
+      "replaces": [
+        "horse"
+      ],
+      "material": {
+        "rough": 0.85,
+        "metal": 0.0,
+        "tint": "0xb8b4aa"
+      },
+      "blocked_by": "o quarto de crianca (src/world/child-ward.js) junta tudo por material e os testes de assombracao dependem de nomes e limites das pecas; integrar com cuidado"
+    }
+  ]
+}

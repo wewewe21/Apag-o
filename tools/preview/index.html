@@ -1,0 +1,87 @@
+<title>Kimodo Clip Preview</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #101214; color: #d8d2c4; font: 12px/1.3 system-ui, sans-serif; overflow: hidden; }
+  #labels div { position: absolute; transform: translate(-50%, 0); white-space: nowrap; background: #000a; padding: 1px 4px; }
+  #info { position: absolute; left: 8px; top: 8px; }
+</style>
+<div id="info">Kimodo clips — arraste para girar. ?file=all_clips.json</div>
+<div id="labels"></div>
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }</script>
+<script type="module">
+import * as THREE from 'three';
+const params = new URLSearchParams(location.search);
+const file = params.get('file') || 'all_clips.json';
+const data = await (await fetch(file)).json();
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 200);
+scene.add(new THREE.GridHelper(60, 60, 0x333333, 0x222222));
+
+function decode(b64, scale) {
+  const bin = atob(b64); const buf = new ArrayBuffer(bin.length); const u8 = new Uint8Array(buf);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  const i16 = new Int16Array(buf); const out = new Float32Array(i16.length);
+  for (let i = 0; i < i16.length; i++) out[i] = i16[i] / scale;
+  return out;
+}
+const sk = data.skeleton; const J = sk.names.length;
+const only = params.get('only');
+const keys = Object.keys(data.clips).filter(k => !only || only.split(',').some(p => k.startsWith(p)));
+const cols = Math.ceil(Math.sqrt(keys.length * 1.6));
+const figs = [];
+keys.forEach((k, n) => {
+  const c = data.clips[k];
+  const rot = decode(c.rot, 32767), root = decode(c.root, 1000);
+  const bones = sk.names.map((nm, j) => { const o = new THREE.Object3D(); o.position.fromArray(sk.offsets[j]); return o; });
+  const holder = new THREE.Group();
+  holder.position.set((n % cols) * 2.2 - cols * 1.1, 0, Math.floor(n / cols) * 2.6);
+  bones.forEach((b, j) => (sk.parents[j] < 0 ? holder : bones[sk.parents[j]]).add(b));
+  scene.add(holder);
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(J * 6);
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const line = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: c.loop ? 0x9fd3b8 : 0xe0a070 }));
+  line.frustumCulled = false;
+  scene.add(line);
+  const label = document.createElement('div');
+  label.textContent = `${k} (${c.frames}f ${c.speed ? c.speed + 'm/s' : ''})`;
+  document.getElementById('labels').appendChild(label);
+  figs.push({ c, rot, root, bones, holder, pos, geo, label });
+});
+let az = 0.6, dragging = false, lx = 0;
+addEventListener('pointerdown', e => { dragging = true; lx = e.clientX; });
+addEventListener('pointerup', () => dragging = false);
+addEventListener('pointermove', e => { if (dragging) { az += (e.clientX - lx) * 0.01; lx = e.clientX; } });
+const t0 = performance.now();
+const v = new THREE.Vector3(), w = new THREE.Vector3();
+function frame() {
+  const t = (performance.now() - t0) / 1000;
+  const R = Math.max(4, cols * 2.2);
+  const cz = Math.floor((figs.length - 1) / cols) * 1.3;
+  cam.position.set(Math.sin(az) * R, R * 0.35, Math.cos(az) * R + cz);
+  cam.lookAt(0, 0.9, cz);
+  for (const f of figs) {
+    const F = f.c.frames;
+    const fi = Math.floor(t * 30) % F;
+    for (let j = 0; j < J; j++) {
+      const o = (fi * J + j) * 4;
+      f.bones[j].quaternion.set(f.rot[o], f.rot[o + 1], f.rot[o + 2], f.rot[o + 3]);
+    }
+    f.bones[0].position.set(f.root[fi * 3] * (f.c.rootMotion ? 0.3 : 1), f.root[fi * 3 + 1], f.root[fi * 3 + 2] * (f.c.rootMotion ? 0.3 : 1));
+    f.holder.updateMatrixWorld(true);
+    for (let j = 1; j < J; j++) {
+      f.bones[j].getWorldPosition(v); f.bones[sk.parents[j]].getWorldPosition(w);
+      f.pos.set([w.x, w.y, w.z, v.x, v.y, v.z], (j - 1) * 6);
+    }
+    f.geo.attributes.position.needsUpdate = true;
+    f.holder.getWorldPosition(v); v.y = 2.1; v.project(cam);
+    f.label.style.left = ((v.x + 1) / 2 * innerWidth) + 'px';
+    f.label.style.top = ((1 - v.y) / 2 * innerHeight) + 'px';
+  }
+  renderer.render(scene, cam);
+  requestAnimationFrame(frame);
+}
+frame();
+</script>

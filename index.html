@@ -1,0 +1,393 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Apagão</title>
+<meta name="description" content="Terror em primeira pessoa num necrotério-hospício abandonado. Encontre os fusíveis, religue a porta e fuja do Noturno.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600&family=Saira+Stencil+One&family=Special+Elite&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --ground: #070908;
+    --panel: rgba(9, 12, 11, 0.86);
+    --bone: #d9d2c1;
+    --dim: #8e948c;
+    --faint: #4a524d;
+    --paper: #d6ccb0;
+    --ink: #221d16;
+    --blood: #a3241a;
+    --amber: #d2b35c;
+    --green: #6fd08a;
+    --display: "Saira Stencil One", "Impact", "Arial Narrow", sans-serif;
+    --type: "Special Elite", "Courier New", monospace;
+    --ui: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--ground); color: var(--bone); font: 17px/1.4 var(--ui); overflow: hidden; user-select: none; }
+  #stage, #stage canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .screen { position: fixed; inset: 0; z-index: 10; overflow-y: auto; padding-inline: 16px; padding-block: 24px; box-sizing: border-box; }
+  button { font: 600 19px/1 var(--ui); letter-spacing: 0.12em; text-transform: uppercase; color: var(--bone); background: transparent; border: 1px solid var(--faint); padding: 12px 22px; cursor: pointer; }
+  button:hover, button:focus-visible { border-color: var(--bone); background: rgba(217, 210, 193, 0.06); outline: none; }
+  button.primary { border-color: var(--blood); color: #f1e5d6; background: rgba(163, 36, 26, 0.18); }
+  button.primary:hover, button.primary:focus-visible { background: rgba(163, 36, 26, 0.34); }
+  kbd { font: 600 14px/1 var(--ui); border: 1px solid var(--dim); border-bottom-width: 2px; padding: 2px 6px; border-radius: 2px; color: var(--bone); background: rgba(0,0,0,.35); }
+
+  /* ---------- titulo ---------- */
+  #title { display: grid; place-items: center; background:
+      radial-gradient(ellipse 60% 45% at 30% 30%, rgba(111, 140, 124, 0.10), transparent 70%),
+      linear-gradient(180deg, #0b0e0d, #050606); }
+  .title-wrap { width: min(1080px, 100%); display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 48px; align-items: center; }
+  .brand h1 { font: 400 clamp(64px, 12vw, 156px)/0.86 var(--display); margin: 0; letter-spacing: 0.02em; color: #e7e0cf; animation: flicker 7s infinite steps(1); text-shadow: 0 0 24px rgba(200, 230, 210, 0.12); }
+  .brand .sub { font: 500 clamp(16px, 2vw, 21px)/1.3 var(--ui); letter-spacing: 0.28em; text-transform: uppercase; color: var(--dim); margin-top: 14px; }
+  .brand p.lede { max-width: 46ch; color: #b9b3a3; font-size: 18px; margin: 26px 0 30px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .modes { margin: 18px 0 0; max-width: 52ch; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; color: var(--dim); font-size: 15px; line-height: 1.35; }
+  .modes dt { font: 600 15px/1.35 var(--ui); letter-spacing: 0.12em; text-transform: uppercase; color: var(--bone); }
+  .modes dd { margin: 0; }
+  .hint { margin-top: 22px; color: var(--dim); font-size: 15px; letter-spacing: 0.04em; }
+  @keyframes flicker { 0%, 100% { opacity: 1; } 41% { opacity: 1; } 42% { opacity: 0.25; } 43% { opacity: 1; } 44% { opacity: 0.6; } 45% { opacity: 1; } 78% { opacity: 1; } 79% { opacity: 0.4; } 80% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .brand h1 { animation: none; } }
+
+  .card { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--type); padding: 22px 24px 20px; transform: rotate(0.8deg); box-shadow: 0 30px 60px rgba(0,0,0,.6); position: relative; }
+  .card::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent 0 25px, rgba(60, 80, 120, 0.12) 25px 26px); pointer-events: none; }
+  .card .hd { display: flex; justify-content: space-between; gap: 12px; border-bottom: 2px solid var(--ink); padding-bottom: 8px; margin-bottom: 10px; font-size: 13px; letter-spacing: 0.06em; }
+  .card h2 { font: 400 20px/1.2 var(--type); margin: 0 0 8px; }
+  table { color: inherit; font: inherit; }
+  .card table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .card td { padding: 3px 0; vertical-align: top; border-bottom: 1px dotted rgba(34, 29, 22, 0.35); }
+  .card td:first-child { width: 42%; white-space: nowrap; padding-right: 10px; }
+  .card kbd { color: var(--ink); border-color: var(--ink); background: transparent; font-family: var(--type); font-weight: 400; }
+  .stamp { position: absolute; right: -8px; bottom: -22px; font: 400 22px/1 var(--display); color: rgba(163, 36, 26, 0.7); border: 3px solid rgba(163, 36, 26, 0.6); padding: 4px 10px; transform: rotate(-9deg); letter-spacing: 0.08em; }
+  .touch-note { display: none; color: var(--amber); margin-top: 16px; }
+  @media (pointer: coarse) { .touch-note { display: block; } }
+  @media (max-width: 800px) { .title-wrap { grid-template-columns: 1fr; gap: 28px; } .card { transform: none; } }
+
+  #loading { display: grid; place-items: center; background: var(--ground); }
+  #loading .box { text-align: center; }
+  #loading .t { font: 400 38px/1 var(--display); letter-spacing: 0.06em; animation: flicker 3s infinite steps(1); }
+  #loadMsg { margin-top: 14px; color: var(--dim); letter-spacing: 0.14em; text-transform: uppercase; font-size: 15px; }
+
+  /* ---------- HUD ---------- */
+  #hud { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+  #cross { position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%; background: rgba(217, 210, 193, 0.45); transition: transform 0.12s, background 0.12s; }
+  #cross.active { transform: scale(1.8); background: rgba(217, 210, 193, 0.9); }
+  #burn { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%;
+    background: conic-gradient(rgba(255, 240, 200, 0.85) calc(var(--v, 0) * 360deg), rgba(255, 255, 255, 0.08) 0);
+    -webkit-mask: radial-gradient(circle, transparent 19px, #000 20px); mask: radial-gradient(circle, transparent 19px, #000 20px); }
+  #prompt { position: absolute; left: 50%; top: calc(50% + 34px); transform: translateX(-50%); font: 500 18px/1.2 var(--ui); letter-spacing: 0.06em; color: var(--bone); text-shadow: 0 1px 3px #000; white-space: nowrap; }
+  #hold { position: absolute; left: 50%; top: calc(50% + 62px); width: 120px; height: 3px; margin-left: -60px; background: rgba(255,255,255,.15); }
+  #holdFill { height: 100%; width: 0; background: var(--bone); }
+  #toast { position: absolute; left: 50%; top: 9%; transform: translateX(-50%); max-width: min(760px, 90vw); text-align: center; font: 500 19px/1.35 var(--ui); letter-spacing: 0.03em; color: var(--bone); text-shadow: 0 1px 4px #000, 0 0 14px #000; opacity: 0; transition: opacity 0.5s; }
+  #toast.show { opacity: 1; }
+  #objective { position: absolute; left: 28px; top: 24px; max-width: 44ch; font: 400 16px/1.4 var(--type); color: #c9c2ae; text-shadow: 0 1px 3px #000; opacity: 0; transition: opacity 0.8s; border-left: 2px solid var(--blood); padding-left: 12px; }
+  #objective.show { opacity: 1; }
+  .dock { position: absolute; right: 26px; bottom: 22px; display: grid; justify-items: end; gap: 8px; }
+  #fuses { display: flex; gap: 6px; }
+  #fuses i { width: 9px; height: 20px; border: 1px solid rgba(217, 210, 193, 0.35); border-radius: 2px; }
+  #fuses i.carry { background: var(--amber); border-color: var(--amber); box-shadow: 0 0 8px rgba(210, 179, 92, 0.5); }
+  #fuses i.in { background: var(--green); border-color: var(--green); }
+  #keyIcon { font: 600 13px/1 var(--ui); letter-spacing: 0.14em; color: var(--amber); border: 1px solid rgba(210,179,92,.5); padding: 3px 6px; }
+  #battery { width: 64px; height: 12px; border: 1px solid rgba(217, 210, 193, 0.45); position: relative; opacity: 0.55; transition: opacity 0.3s; }
+  #battery.on { opacity: 0.9; }
+  #battery::after { content: ""; position: absolute; right: -5px; top: 3px; width: 3px; height: 6px; background: rgba(217, 210, 193, 0.45); }
+  #batFill { height: 100%; background: var(--bone); }
+  #battery.low #batFill { background: var(--blood); animation: blink 0.9s infinite; }
+  @keyframes blink { 50% { opacity: 0.3; } }
+  .heatbar { width: 64px; height: 3px; background: rgba(255,255,255,.08); opacity: 0; transition: opacity .3s; }
+  .heatbar.visible { opacity: 1; }
+  #heat { height: 100%; width: 0; background: #e9a14a; }
+  #heat.hot { background: #ff5a2a; }
+  .stambar { position: absolute; left: 50%; bottom: 26px; width: 220px; margin-left: -110px; height: 2px; background: rgba(255,255,255,.06); opacity: 0; transition: opacity 0.4s; }
+  .stambar.visible { opacity: 1; }
+  #stamina { height: 100%; background: rgba(217, 210, 193, 0.6); transform-origin: center; }
+  #stamina.ex { background: var(--blood); }
+  #breath { position: absolute; left: 50%; bottom: 18%; transform: translateX(-50%); text-align: center; font: 500 16px/1.3 var(--ui); letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
+  #breath .bar { width: 200px; height: 3px; background: rgba(255,255,255,.1); margin: 8px auto 0; }
+  #breathFill { height: 100%; background: var(--bone); transform-origin: left; }
+  #breath.urgent { color: var(--bone); }
+  #breath.urgent .lbl::after { content: " — ELE ESTÁ PERTO"; color: var(--blood); }
+  #breath.holding #breathFill { background: #9fc3d8; }
+  #charge { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); width: min(420px, 70vw); text-align: center; font: 500 14px/1 var(--ui); letter-spacing: 0.22em; color: var(--amber); }
+  #charge .bar { height: 4px; margin-top: 8px; background: rgba(255,255,255,.1); }
+  #chargeFill { height: 100%; width: 0; background: var(--amber); }
+  #debug { position: fixed; left: 10px; bottom: 10px; z-index: 20; font: 12px/1.35 ui-monospace, Consolas, monospace; color: #9fd3b8; background: rgba(0,0,0,.6); padding: 8px 10px; white-space: pre; pointer-events: none; }
+
+  /* ---------- telas sobre o jogo ---------- */
+  .overlay { background: rgba(4, 5, 5, 0.82); display: grid; place-items: center; backdrop-filter: blur(2px); }
+  .menu { width: min(460px, 100%); display: grid; gap: 18px; }
+  .menu h2 { font: 400 44px/1 var(--display); margin: 0 0 6px; letter-spacing: 0.04em; }
+  .field { display: grid; grid-template-columns: 1fr 1.3fr; align-items: center; gap: 14px; color: var(--dim); letter-spacing: 0.06em; }
+  .field input[type=range], .field select { width: 100%; accent-color: var(--blood); }
+  select { font: 500 16px var(--ui); background: #111513; color: var(--bone); border: 1px solid var(--faint); padding: 6px; }
+  .controls-mini { color: var(--dim); font-size: 15px; line-height: 1.7; }
+  .controls-mini:empty { display: none; }
+
+  #note .paper { width: min(620px, 100%); background: var(--paper); color: var(--ink); padding: 34px 38px 30px; font: 17px/1.62 var(--type); box-shadow: 0 30px 80px rgba(0,0,0,.7); transform: rotate(-0.6deg); max-height: 82vh; overflow-y: auto; box-sizing: border-box; }
+  #note h3 { font: 400 24px/1.2 var(--type); margin: 0; text-transform: uppercase; letter-spacing: 0.04em; }
+  #noteMeta { font-size: 13px; opacity: 0.7; margin: 6px 0 18px; border-bottom: 1px solid rgba(34,29,22,.4); padding-bottom: 10px; }
+  #noteBody p { margin: 0 0 12px; }
+  #noteBody p.hand { font-family: var(--type); color: #6b1a12; transform: rotate(-1.5deg); margin-top: 18px; font-size: 18px; }
+  .paper .close { margin-top: 10px; color: var(--ink); border-color: rgba(34,29,22,.5); font-size: 15px; }
+  #map .sheet { display: grid; gap: 12px; justify-items: center; max-width: 100%; }
+  #mapCanvas canvas { max-width: min(1100px, 94vw); height: auto; border: 1px solid var(--faint); display: block; }
+
+  /* ---------- online ---------- */
+  .menu.wide { width: min(560px, 100%); }
+  .sub2 { color: var(--dim); margin: -6px 0 4px; letter-spacing: 0.04em; }
+  .field input[type=text], .join input { font: 500 17px var(--ui); letter-spacing: 0.08em; background: #111513; color: var(--bone); border: 1px solid var(--faint); padding: 8px 10px; width: 100%; box-sizing: border-box; }
+  .join { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+  .join input { text-transform: uppercase; letter-spacing: 0.4em; text-align: center; font-size: 22px; }
+  .voicepanel { border: 1px solid var(--faint); padding: 12px 14px; display: grid; gap: 10px; background: rgba(0,0,0,.25); }
+  .vp-title { letter-spacing: .14em; text-transform: uppercase; color: var(--dim); font-size: 14px; }
+  .voicepanel .actions button { padding: 8px 12px; font-size: 15px; }
+  .mimicbox { border: 1px solid var(--faint); padding: 12px 14px; display: grid; gap: 8px; background: rgba(0,0,0,.25); }
+  .mimicbox .status { min-height: 0; }
+  .mimicbox .actions button { padding: 8px 12px; font-size: 15px; }
+  #mimicModal { z-index: 45; }
+  #mimicModal .menu { border: 1px solid var(--faint); background: rgba(9,12,11,.96); padding: 22px 24px; max-height: 92vh; overflow-y: auto; box-sizing: border-box; }
+  #mimicModal h2 { font-size: 30px; }
+  #mimicModal ul { margin: 0; padding-left: 1.2em; color: var(--dim); font-size: 15px; line-height: 1.55; display: grid; gap: 6px; }
+  #mimicModal label.chk { display: flex; gap: 10px; align-items: flex-start; color: var(--bone); line-height: 1.4; cursor: pointer; }
+  #mimicModal label.chk input { accent-color: var(--blood); margin-top: 4px; }
+  #mmText { font: 19px/1.55 var(--type); color: var(--bone); border-left: 2px solid var(--blood); padding: 4px 0 4px 14px; }
+  #mmProg { width: 100%; accent-color: var(--blood); }
+  #mmWarn { color: #e0705f; font: 400 15px/1.35 var(--type); min-height: 1.2em; }
+  .status { font: 400 15px/1.35 var(--type); color: var(--amber); min-height: 2.7em; }
+  .status.err { color: #e0705f; }
+  .status.ok { color: var(--green); }
+  .roomlist { border: 1px solid var(--faint); background: rgba(0,0,0,.25); padding: 10px 12px; max-height: 190px; overflow-y: auto; }
+  .rl-head { display: flex; justify-content: space-between; align-items: center; color: var(--dim); letter-spacing: 0.12em; text-transform: uppercase; font-size: 14px; margin-bottom: 6px; }
+  .rl-head button { padding: 4px 10px; font-size: 13px; }
+  #onRooms, #lbMembers { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  #onRooms li { display: grid; grid-template-columns: 4.2em 1fr auto auto; gap: 10px; align-items: center; padding: 4px 0; border-bottom: 1px dotted rgba(255,255,255,.1); }
+  #onRooms .code { font: 400 18px var(--display); letter-spacing: 0.12em; }
+  #onRooms .empty { color: var(--faint); grid-template-columns: 1fr; }
+  #onRooms button { padding: 4px 12px; font-size: 14px; }
+  #lbMembers li { display: grid; grid-template-columns: 1.4em 1fr auto; gap: 10px; align-items: center; padding: 6px 8px; border: 1px solid rgba(255,255,255,.08); }
+  #lbMembers .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--faint); }
+  #lbMembers .dot.ready { background: var(--green); box-shadow: 0 0 8px rgba(111,208,138,.6); }
+  #lbMembers .dot.off { background: transparent; border: 1px solid var(--faint); }
+  #lbMembers .tag { color: var(--dim); font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .roomcode { font: 400 64px/1 var(--display); letter-spacing: 0.18em; text-align: center; color: var(--bone); user-select: text; }
+  #netBanner { position: fixed; left: 50%; top: 10px; transform: translateX(-50%); z-index: 40; background: rgba(9,12,11,.92); border: 1px solid var(--amber); color: var(--amber); padding: 8px 16px; font: 500 16px var(--ui); letter-spacing: .06em; max-width: min(720px, 92vw); text-align: center; }
+  #netBanner.err { border-color: #e0705f; color: #e0705f; }
+  #meet { position: absolute; left: 50%; top: 64px; transform: translateX(-50%); font: 500 17px var(--ui); letter-spacing: .08em; text-transform: uppercase; color: var(--amber); text-shadow: 0 1px 3px #000; text-align: center; }
+  #meet.ok { color: var(--green); }
+  #roster { position: absolute; left: 28px; bottom: 22px; font: 500 15px/1.5 var(--ui); letter-spacing: .05em; color: var(--dim); text-shadow: 0 1px 3px #000; }
+  #roster .me { color: var(--bone); }
+  #roster .dead { text-decoration: line-through; opacity: .55; }
+  #roster .off { opacity: .55; font-style: italic; }
+  #roster .talk::before { content: "\25CF "; color: var(--green); }
+  #spectate { position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%); text-align: center; font: 500 17px var(--ui); letter-spacing: .14em; text-transform: uppercase; color: #9fc3d8; text-shadow: 0 1px 4px #000; }
+  #voicebar { position: absolute; right: 26px; top: 20px; display: flex; gap: 8px; align-items: center; pointer-events: auto; font: 500 14px var(--ui); letter-spacing: .1em; color: var(--dim); }
+  #voicebar button { padding: 4px 10px; font-size: 13px; }
+  #voicebar button.muted { border-color: var(--blood); color: #e0705f; }
+  #death { background: radial-gradient(ellipse at center, rgba(40, 4, 3, 0.75), rgba(0,0,0,.96)); display: grid; place-items: center; text-align: center; }
+  #death h2 { font: 400 clamp(46px, 8vw, 92px)/1 var(--display); color: #c9372a; margin: 0; letter-spacing: 0.04em; }
+  #deathTip { max-width: 52ch; margin: 18px auto 26px; color: #c8bfae; font: 17px/1.5 var(--type); }
+  #win { background: #b9bdb8; color: #1a1d1b; display: grid; place-items: center; text-align: center; }
+  #win h2 { font: 400 clamp(46px, 9vw, 110px)/0.9 var(--display); margin: 0; }
+  #win p { font: 18px/1.5 var(--type); max-width: 50ch; margin: 18px auto; }
+  #winStats { display: flex; gap: 28px; justify-content: center; flex-wrap: wrap; margin: 20px 0 28px; }
+  #winStats dt { font: 500 13px/1 var(--ui); letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.7; }
+  #winStats dd { margin: 6px 0 0; font: 400 34px/1 var(--display); font-variant-numeric: tabular-nums; }
+  #win button { color: #1a1d1b; border-color: #1a1d1b; }
+</style>
+
+<div id="stage"></div>
+
+<section id="title" class="screen">
+  <div class="title-wrap">
+    <div class="brand">
+      <h1>APAGÃO</h1>
+      <div class="sub">Hospital-Colônia Santa Lúcia · 1983</div>
+      <p class="lede">Você veio buscar um corpo no necrotério. A energia caiu e a porta principal travou atrás de você. Encontre os cinco fusíveis, religue a trava e saia — antes que o Noturno encontre você no escuro.</p>
+      <div class="actions">
+        <button id="btnStart" class="primary">Normal</button>
+        <button id="btnHardcore">Hardcore</button>
+        <button id="btnOnline">Online</button>
+        <button id="btnResumeOnline" hidden>Voltar à sala online</button>
+        <button id="btnContinue" hidden>Continuar do quadro</button>
+      </div>
+      <dl class="modes">
+        <dt>Normal</dt><dd>Salva ao instalar cada fusível. Se ele te pegar, você volta ao quadro e os fusíveis já instalados continuam lá.</dd>
+        <dt>Hardcore</dt><dd>Sem checkpoints. Se ele te pegar, tudo recomeça: fusíveis, quadro e luzes. Não mexe no seu save do Normal.</dd>
+        <dt>Online</dt><dd>Cooperativo para até 4 jogadores, uma vida cada e sete fusíveis. Voz por microfone aberto.</dd>
+      </dl>
+      <div class="hint">Use fones de ouvido. O som diz onde ele está.</div>
+      <div class="touch-note">Este jogo precisa de teclado e mouse.</div>
+    </div>
+    <div class="card" aria-label="Controles">
+      <div class="hd"><span>FICHA DE ADMISSÃO Nº 0413</span><span>ALA B</span></div>
+      <h2>Instruções ao visitante</h2>
+      <table>
+        <tr><td><kbd>W A S D</kbd></td><td>andar</td></tr>
+        <tr><td><kbd>Shift</kbd></td><td>correr (barulho, cansa)</td></tr>
+        <tr><td><kbd>C</kbd></td><td>agachar (quase silencioso)</td></tr>
+        <tr><td><kbd>F</kbd></td><td>lanterna liga/desliga</td></tr>
+        <tr><td>botão direito</td><td>foco: queima os olhos dele</td></tr>
+        <tr><td><kbd>E</kbd></td><td>interagir, esconder-se</td></tr>
+        <tr><td><kbd>Espaço</kbd></td><td>prender a respiração (escondido)</td></tr>
+        <tr><td><kbd>R</kbd></td><td>bater a lanterna (bateria fraca)</td></tr>
+        <tr><td><kbd>Tab</kbd> / <kbd>M</kbd></td><td>objetivo / planta do prédio</td></tr>
+      </table>
+      <div class="stamp">NOTURNO</div>
+    </div>
+  </div>
+</section>
+
+<section id="loading" class="screen" hidden>
+  <div class="box"><div class="t">APAGÃO</div><div id="loadMsg">Carregando</div></div>
+</section>
+
+<div id="hud" hidden>
+  <div id="cross"></div>
+  <div id="burn" hidden></div>
+  <div id="prompt" hidden></div>
+  <div id="hold" hidden><div id="holdFill"></div></div>
+  <div id="toast"></div>
+  <div id="objective"></div>
+  <div id="meet" hidden></div>
+  <div id="roster" hidden></div>
+  <div id="spectate" hidden>Espírito — você não pode interagir<br><span style="opacity:.7;font-size:14px">WASD para andar · os vivos não veem você, exceto por instantes</span></div>
+  <div id="voicebar" hidden><span id="voiceState">voz</span><button id="btnMic" title="Silenciar / ativar seu microfone">Mic</button><button id="btnVoiceCfg" title="Microfone e volume da voz">Voz…</button></div>
+  <div id="charge" hidden>CARGA DA TRAVA<div class="bar"><div id="chargeFill"></div></div></div>
+  <div id="breath" hidden><span class="lbl">Segure <kbd>Espaço</kbd> para prender a respiração</span><div class="bar"><div id="breathFill"></div></div></div>
+  <div class="stambar"><div id="stamina"></div></div>
+  <div class="dock">
+    <div id="keyIcon" hidden>CHAVE</div>
+    <div id="fuses"></div>
+    <div class="heatbar"><div id="heat"></div></div>
+    <div id="battery"><div id="batFill"></div></div>
+  </div>
+</div>
+
+<section id="pause" class="screen overlay" hidden>
+  <div class="menu">
+    <h2 id="pauseTitle">Pausado</h2>
+    <div class="controls-mini" id="pauseHint"></div>
+    <label class="field" for="optSens">Sensibilidade <input id="optSens" type="range" min="0.3" max="2.5" step="0.05"></label>
+    <label class="field" for="optVol">Volume <input id="optVol" type="range" min="0" max="1" step="0.05"></label>
+    <label class="field" for="optQuality">Qualidade
+      <select id="optQuality"><option value="low">Baixa</option><option value="medium">Média</option><option value="high">Alta</option></select>
+    </label>
+    <label class="field" for="optInvert">Inverter eixo Y <input id="optInvert" type="checkbox"></label>
+    <div id="voicePanel" class="voicepanel" hidden>
+      <div class="vp-title">Voz (microfone aberto)</div>
+      <label class="field" for="vpDevice">Microfone <select id="vpDevice"><option value="">Padrão do sistema</option></select></label>
+      <label class="field" for="vpVol">Volume das vozes <input id="vpVol" type="range" min="0" max="1.6" step="0.05"></label>
+      <div class="actions"><button id="vpMute">Silenciar meu microfone</button><button id="vpEnable">Ativar microfone</button></div>
+      <div id="vpStatus" class="status"></div>
+      <div class="controls-mini">Use fones de ouvido para evitar eco. Perto: voz natural. Longe: sai como rádio. Espíritos e vivos não se ouvem.</div>
+    </div>
+    <div id="mmPause" class="voicepanel" hidden>
+      <div class="vp-title">Eco de voz ativo</div>
+      <div class="controls-mini">A criatura pode imitar a sua voz nesta partida. As falas ficam só na memória do servidor e somem ao fim da partida.</div>
+      <div class="actions"><button id="mmRevokePause">Revogar e apagar minha voz</button></div>
+    </div>
+    <div class="controls-mini" id="pauseInfo">Fusíveis no bolso se perdem se você morrer. Instalar no quadro salva o progresso.</div>
+    <div class="actions"><button id="btnResume" class="primary">Voltar</button><button id="btnQuit">Menu inicial</button></div>
+  </div>
+</section>
+
+<section id="online" class="screen overlay" hidden>
+  <div class="menu wide">
+    <h2>Online</h2>
+    <div class="sub2">Cooperativo · até 4 jogadores · uma vida cada · 7 fusíveis</div>
+    <label class="field" for="onName">Seu nome <input id="onName" type="text" maxlength="16" autocomplete="off" spellcheck="false"></label>
+    <div id="onStatus" class="status" role="status"></div>
+    <div class="actions"><button id="onCreate" class="primary">Criar sala</button></div>
+    <div class="join"><input id="onCode" type="text" maxlength="4" placeholder="CÓDIGO" autocomplete="off" spellcheck="false" aria-label="Código da sala"><button id="onJoin">Entrar na sala</button></div>
+    <div class="roomlist"><div class="rl-head"><span>Salas disponíveis</span><button id="onRefresh">Atualizar</button></div><ul id="onRooms"></ul></div>
+    <div class="actions"><button id="onBack">Voltar</button></div>
+  </div>
+</section>
+
+<section id="lobby" class="screen overlay" hidden>
+  <div class="menu wide">
+    <h2 id="lbTitle">Sala</h2>
+    <div class="roomcode" id="lbCode" title="Passe este código para os amigos">----</div>
+    <div class="sub2" id="lbSub"></div>
+    <ul id="lbMembers"></ul>
+    <div id="lbStatus" class="status" role="status"></div>
+    <div id="mmBox" class="mimicbox" hidden>
+      <div class="vp-title">Eco de voz (opcional)</div>
+      <div class="controls-mini">A criatura pode dizer frases curtas (“Vem aqui.”) com uma voz parecida com a sua, gerada no seu computador. Só com a sua autorização, separada do chat de voz.</div>
+      <div id="mmState" class="status" role="status"></div>
+      <div class="actions"><button id="mmOpen">Permitir que a criatura imite minha voz…</button><button id="mmRevoke" hidden>Revogar e apagar minha voz</button></div>
+    </div>
+    <div class="actions"><button id="lbReady" class="primary">Estou pronto</button><button id="lbStart" hidden>Iniciar partida</button><button id="lbLeave">Sair da sala</button></div>
+    <div class="controls-mini">Ao entrar na partida o navegador pede acesso ao microfone (voz de proximidade, com filtro de rádio à distância).</div>
+  </div>
+</section>
+
+<section id="mimicModal" class="screen overlay" hidden role="dialog" aria-modal="true" aria-labelledby="mmHead">
+  <div class="menu wide">
+    <div id="mmConsent">
+      <h2 id="mmHead">A criatura imitando a sua voz</h2>
+      <ul>
+        <li><b>Você lê uma frase</b> (uns 10 segundos). A gravação é processada só neste navegador e apagada logo depois: não vai para o servidor nem para os outros jogadores.</li>
+        <li>Um modelo de voz que roda <b>no seu computador</b> gera 5 falas novas, curtas, em português (“Achei um fusível.”, “Vem aqui.”…), com uma voz parecida com a sua. A semelhança é aproximada.</li>
+        <li>Só essas 5 falas curtas vão para o servidor do jogo e para os jogadores <b>desta sala</b>, para a criatura tocá-las (com efeito sombrio) durante <b>esta partida</b>. Ficam só na memória e são apagadas ao fim da partida, ao você sair ou ao você revogar.</li>
+        <li>Nada é enviado a serviços de terceiros. O modelo (~146&nbsp;MB) é baixado uma vez do Hugging Face e guardado no navegador; sua voz não passa por lá.</li>
+        <li>Isto é <b>diferente do chat de voz</b>: liberar o microfone para conversar não autoriza isto. É opcional; sem ele o jogo funciona igual.</li>
+        <li>Use só a sua própria voz. Modelo: Kyutai Pocket TTS (licença CC-BY-4.0).</li>
+      </ul>
+      <label class="chk"><input id="mmAgree" type="checkbox"> <span>Entendi e autorizo que a criatura imite a minha voz nesta sala, como descrito acima.</span></label>
+      <div class="actions"><button id="mmYes" class="primary" disabled>Autorizo, continuar</button><button id="mmNo">Não, obrigado</button></div>
+    </div>
+    <div id="mmWork" hidden>
+      <h2 id="mmTitle"></h2>
+      <div id="mmText" hidden></div>
+      <div id="mmMsg" class="controls-mini"></div>
+      <progress id="mmProg" max="1" value="0" hidden></progress>
+      <div id="mmWarn" role="alert"></div>
+      <div class="actions"><button id="mmRec" class="primary" hidden>Gravar</button><button id="mmStop" class="primary" hidden>Parar</button><button id="mmCancel" hidden>Cancelar</button><button id="mmClose" class="primary" hidden>Fechar</button></div>
+    </div>
+  </div>
+</section>
+
+<div id="netBanner" hidden></div>
+
+<section id="endScreen" class="screen overlay" hidden>
+  <div class="menu wide" style="text-align:center">
+    <h2 id="endTitle"></h2>
+    <p id="endText" class="sub2"></p>
+    <dl id="endStats" style="display:flex;gap:26px;justify-content:center;flex-wrap:wrap;margin:6px 0"></dl>
+    <ul id="endPlayers" style="list-style:none;margin:0;padding:0;color:var(--dim)"></ul>
+    <div class="actions" style="justify-content:center"><button id="endBack" class="primary">Voltar à sala</button></div>
+  </div>
+</section>
+
+<section id="note" class="screen overlay" hidden>
+  <div class="paper">
+    <h3 id="noteTitle"></h3>
+    <div id="noteMeta"></div>
+    <div id="noteBody"></div>
+    <button id="btnNoteClose" class="close">Guardar <kbd>E</kbd></button>
+  </div>
+</section>
+
+<section id="map" class="screen overlay" hidden>
+  <div class="sheet"><div id="mapCanvas"></div><button id="btnMapClose">Fechar <kbd>M</kbd></button></div>
+</section>
+
+<section id="death" class="screen" hidden>
+  <div><h2>ELE TE PEGOU</h2><p id="deathTip"></p><button id="btnRetry" class="primary">Tentar de novo</button></div>
+</section>
+
+<section id="win" class="screen" hidden>
+  <div>
+    <h2>VOCÊ SAIU</h2>
+    <p>A chuva lá fora nunca pareceu tão clara. Atrás de você, a porta do Santa Lúcia se fecha — e, no escuro, alguma coisa espera a próxima queda de energia.</p>
+    <dl id="winStats"></dl>
+    <button id="btnAgain">Jogar de novo</button>
+  </div>
+</section>
+
+<pre id="debug" hidden></pre>
+
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }</script>
+<script src="runtime-config.js"></script>
+<script type="module" src="src/main.js"></script>

@@ -1,0 +1,15 @@
+# Presenças no Santa Lúcia
+
+Os seis quartos da Ala de Pacientes guardam objetos infantis abandonados: ursinhos rasgados, bonecas quebradas, blocos, cavalo de madeira, caminhão e xilofone danificados. Os desenhos apagados e os nomes nas paredes deixam pistas das crianças que passaram pelo hospital. Uma anotação de enfermagem anexada ao caderno existente registra os seis óbitos e os pertences que ninguém veio buscar. Os objetos não bloqueiam portas, camas, esconderijos ou os fusíveis.
+
+As risadas surgem baixas durante cada passagem pela ala, atrás das portas, com posição HRTF e abafamento pelas paredes. Elas desaparecem gradualmente quando o jogador sai. No primeiro quarto à esquerda, a primeira entrada desperta um pato de corda: ele toca uma pequena melodia, gira a chave e as rodas, anda cerca de 63 cm e para após dez segundos. O evento ocorre uma vez por tentativa. A morte no Normal conserva a flag; o save existente recebe apenas essa flag, sem salvar novos fusíveis ou alterar o checkpoint. Uma nova tentativa Hardcore libera o encontro novamente. No cooperativo, as presenças são percepções locais de cada jogador e não afetam a simulação compartilhada nem a criatura.
+
+Após 12 segundos sem luz de teto útil nem lanterna funcionando, a paranoia cresce, atingindo o limite em 60 segundos. A periferia da visão escurece, passos falsos aparecem ocasionalmente e figuras humanas sem rosto podem surgir por menos de 1,1 segundo no canto do olho. Elas somem ao olhar diretamente ou iluminar. Voltar à luz alivia o efeito em até oito segundos. Esses sinais não geram ruído para a IA, colisão, dano ou alvos. Menus e esconderijos congelam o relógio; morte e estado de espírito limpam a paranoia. As alucinações cedem às pistas de perseguição e ao brinquedo.
+
+As vozes da ala foram regeneradas com foco em risadas humanas de duas crianças, sílabas vocais e respirações naturais, evitando assobios e sons de pássaros. O master tem alvo de -27 LUFS e ganho normal de 0,38; durante o brinquedo mantém 0,10. Somente essa camada usa oclusão a 1800 Hz com ganho 0,65, para conservar o timbre vocal atrás das portas sem perder a origem espacial. Os avisos de perseguição continuam suprimindo as vozes.
+
+Batidas irregulares usam portas fechadas próximas, no mesmo andar. O vidro cai exclusivamente junto às macas do necrotério. Os intervalos variam, e os eventos dão espaço ao inimigo, aos esconderijos e à sequência do brinquedo.
+
+Foram acrescentados 13 masters ElevenLabs: risadas, melodia, três batidas, duas quedas de copo e seis contatos de passo fantasma. Os novos sons passam pelo sistema espacial existente. Os passos realistas dos jogadores e do inimigo e o som original da captura foram preservados. O catálogo contém os prompts; o manifesto contém modelo, data, hashes e parâmetros. Nenhuma credencial é enviada ao cliente.
+
+Validação: `npm run haunt:test`, `npm run audio:test`, `npm test`. A prévia local de desenvolvimento está em `/index.html?debug&hauntqa`, com verificação automática e botões para visitar os seis quartos e comparar escuro/luz. Ela usa Hardcore e não modifica o save Normal. A ferramenta de prévia não entra no pacote publicado.

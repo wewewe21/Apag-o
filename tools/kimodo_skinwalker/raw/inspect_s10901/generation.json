@@ -1,0 +1,35 @@
+{
+  "name": "inspect",
+  "seed": 10901,
+  "steps": 100,
+  "frames": 120,
+  "joints": 30,
+  "profile": "skinwalker",
+  "prompt": "A gaunt crooked hunched humanoid examines something on the floor. Keeping its feet planted, it bends its knees deeply and bows its rounded spine forward, long neck and tilted head reaching down first. One thin arm reaches low forward with an open tense claw hand, the other hangs bent beside it for balance. It pauses very low as though studying a scent, then slowly draws the reaching hand back and rises into the original sharply hunched asymmetric stance. A single unsettling deliberate inspection.",
+  "promptFile": "tools/kimodo_skinwalker/prompts/inspect_s10901.txt",
+  "protocol": "8\t100\t10901\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_skinwalker\\raw\\inspect_s10901\t120\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_skinwalker\\prompts\\inspect_s10901.txt",
+  "elapsedSeconds": 5.375,
+  "generatedUtc": "2026-10-02T01:23:47Z",
+  "backend": "vulkan",
+  "textLayerChunk": 32,
+  "textResidentLimitMiB": 9000,
+  "motionLayerChunk": 8,
+  "models": {
+    "executable": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\build\\debug\\kmd-generate.exe",
+      "sha256": "156edbaa3d2066e53a774c414b04676a648d134ab94a260be6c664d21270401d"
+    },
+    "motionModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\models\\kimodo-soma-rp-v1.1-f32.gguf",
+      "sha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4"
+    },
+    "textModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\Llama-3-Kimodo-Q8_0.gguf",
+      "sha256": "b26d0e74b115b33a7f2df5aca04426548365e99217cd590986f8abc4172e4c5c"
+    }
+  },
+  "streams": {
+    "root_positions.f32": "6abbc0a26963291722fdf7882f92b3195b381ff1465f65160127c32ec4094def",
+    "local_rotations_xyzw.f32": "9f5cf36bdfaa00d40e42dd72434ffca825db29b4ef2586389194fa577d45ef63"
+  }
+}

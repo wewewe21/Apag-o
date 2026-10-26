@@ -1,0 +1,35 @@
+{
+  "name": "idle",
+  "seed": 10701,
+  "steps": 100,
+  "frames": 150,
+  "joints": 30,
+  "profile": "skinwalker",
+  "prompt": "A gaunt crooked humanoid stands almost motionless with narrow planted feet and softly bent knees. Its upper back is sharply hunched, thin neck extending low ahead and head tilted to one side. One shoulder is lower than the other. Its long arms dangle close beside the narrow body, elbows slightly bent, tense claw hands hanging below the waist. The chest expands slowly with an eerie breath, followed by a delayed small shoulder tremor and tiny asymmetric weight shifts. A restrained unsettling hunched idle, without stepping.",
+  "promptFile": "tools/kimodo_skinwalker/prompts/idle_s10701.txt",
+  "protocol": "8\t100\t10701\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_skinwalker\\raw\\idle_s10701\t150\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_skinwalker\\prompts\\idle_s10701.txt",
+  "elapsedSeconds": 6.0,
+  "generatedUtc": "2026-10-02T01:23:35Z",
+  "backend": "vulkan",
+  "textLayerChunk": 32,
+  "textResidentLimitMiB": 9000,
+  "motionLayerChunk": 8,
+  "models": {
+    "executable": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\build\\debug\\kmd-generate.exe",
+      "sha256": "156edbaa3d2066e53a774c414b04676a648d134ab94a260be6c664d21270401d"
+    },
+    "motionModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\models\\kimodo-soma-rp-v1.1-f32.gguf",
+      "sha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4"
+    },
+    "textModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\Llama-3-Kimodo-Q8_0.gguf",
+      "sha256": "b26d0e74b115b33a7f2df5aca04426548365e99217cd590986f8abc4172e4c5c"
+    }
+  },
+  "streams": {
+    "root_positions.f32": "2885f2ff151d07f3191121744105acbac3745ac808dee61157743b0126ca57c7",
+    "local_rotations_xyzw.f32": "a2a06ae6f247f358303f6d531e45c7553e129a60a3d20d1f123eee50b3927ac1"
+  }
+}

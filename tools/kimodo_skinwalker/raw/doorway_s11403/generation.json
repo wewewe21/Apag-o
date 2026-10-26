@@ -1,0 +1,35 @@
+{
+  "name": "doorway",
+  "seed": 11403,
+  "steps": 100,
+  "frames": 240,
+  "joints": 30,
+  "profile": "skinwalker",
+  "prompt": "A person walks straight forward continuously while bent deeply at the waist beneath a very low ceiling. The torso stays almost horizontal and the knees stay bent throughout all the walking steps. The head and neck stay low in front of the rounded back without rising. Both arms are held out to the left and right sides at chest height, elbows bent about ninety degrees, open palms facing outward to slide lightly along the narrow walls on either side. Both feet take complete alternating steps with continuous forward travel. Maintain the deeply bowed posture and sideways wall bracing arms for the whole sequence, no upright beginning or ending.",
+  "promptFile": "tools/kimodo_skinwalker/prompts/doorway_s11403.txt",
+  "protocol": "8\t100\t11403\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_skinwalker\\raw\\doorway_s11403\t240\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_skinwalker\\prompts\\doorway_s11403.txt",
+  "elapsedSeconds": 27.468,
+  "generatedUtc": "2026-10-02T01:32:18Z",
+  "backend": "vulkan",
+  "textLayerChunk": 32,
+  "textResidentLimitMiB": 9000,
+  "motionLayerChunk": 8,
+  "models": {
+    "executable": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\build\\debug\\kmd-generate.exe",
+      "sha256": "156edbaa3d2066e53a774c414b04676a648d134ab94a260be6c664d21270401d"
+    },
+    "motionModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\models\\kimodo-soma-rp-v1.1-f32.gguf",
+      "sha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4"
+    },
+    "textModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\Llama-3-Kimodo-Q8_0.gguf",
+      "sha256": "b26d0e74b115b33a7f2df5aca04426548365e99217cd590986f8abc4172e4c5c"
+    }
+  },
+  "streams": {
+    "root_positions.f32": "aba87387f9e57b4c24bc02c7c2941d5800f5edd4858af0bce98267e66ccee33c",
+    "local_rotations_xyzw.f32": "224e8748fb5eb756f5ed2f5f9be1e3771ffe863acc6a9ad88598029af5c07d25"
+  }
+}

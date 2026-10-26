@@ -1,0 +1,32 @@
+{
+  "name": "crawl",
+  "seed": 602,
+  "steps": 100,
+  "frames": 180,
+  "joints": 30,
+  "prompt": "A massive creature crawls forward on both hands and knees. Its hands are planted far apart, elbows bent outward, chest kept low and broad. It advances the left hand with the right knee, then the right hand with the left knee. The torso shifts heavy weight between the supporting hands, the head hangs low and looks forward. Slow powerful continuous crawling with grounded limbs and a heavy rolling back.",
+  "protocol": "8\t100\t602\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_guardiao\\raw\\crawl_s602\t180\tC:\\Users\\WillianIA\\Videos\\Jogo de terror opus 5;5 online\\tools\\kimodo_guardiao\\prompts\\crawl.txt",
+  "elapsedSeconds": 20.953,
+  "generatedUtc": "2026-10-01T22:33:34Z",
+  "backend": "vulkan",
+  "textLayerChunk": 8,
+  "motionLayerChunk": 8,
+  "models": {
+    "executable": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\build\\debug\\kmd-generate.exe",
+      "sha256": "156edbaa3d2066e53a774c414b04676a648d134ab94a260be6c664d21270401d"
+    },
+    "motionModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\models\\kimodo-soma-rp-v1.1-f32.gguf",
+      "sha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4"
+    },
+    "textModel": {
+      "path": "C:\\Users\\WillianIA\\Documents\\kimodo-ai\\Llama-3-Kimodo-Q8_0.gguf",
+      "sha256": "b26d0e74b115b33a7f2df5aca04426548365e99217cd590986f8abc4172e4c5c"
+    }
+  },
+  "streams": {
+    "root_positions.f32": "9fa97795dfaa2aacc0046fab5584cbe335d127b951ac6125cfacd29b38e44d65",
+    "local_rotations_xyzw.f32": "ebc54966b0cffec1e1786546b592b768e3b0566350a8a4730336167d67e5b43f"
+  }
+}
