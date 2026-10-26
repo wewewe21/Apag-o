@@ -11,7 +11,7 @@
 //              Vazio = Hugging Face (https://huggingface.co/spaces/KevinAHM/pocket-tts-web/resolve/main/onnx). Para hospedar
 //              os arquivos voce mesmo, aponte para uma pasta que tenha a subpasta portuguese/ (ver docs/PUBLICAR.md).
 window.APAGAO_CONFIG = {
-  serverUrl: '',
+  serverUrl: 'https://apag-o.onrender.com',
   iceServers: [],
   mimicModelBase: '',
 };
