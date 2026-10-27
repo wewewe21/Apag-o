@@ -106,6 +106,7 @@ await section('Limite de salas e nomes repetidos', async () => {
 // ---------------------------------------------------------------------------
 let match, players;
 await section('Iniciar partida: spawn, 7 fusiveis, estado completo', async () => {
+  roomOf(code).matchOpts = { fixedFuses: true };          // estes testes usam os lugares padrao dos fusiveis (o sorteio tem teste proprio)
   A.send({ t: 'start' });
   const syncs = await Promise.all([A, B, C, D].map(b => b.next('sync', 4000)));
   match = roomOf(code).match;
