@@ -58,10 +58,10 @@ export class Player {
     if (this.lookLock) { this._applyCamera(dt, 0); return; }
 
     // ---------- mover ----------
-    const f = (input.down('KeyW') || input.down('ArrowUp') ? 1 : 0) - (input.down('KeyS') || input.down('ArrowDown') ? 1 : 0);
-    const s = (input.down('KeyD') || input.down('ArrowRight') ? 1 : 0) - (input.down('KeyA') || input.down('ArrowLeft') ? 1 : 0);
-    if (input.hit('KeyC') || input.hit('ControlLeft')) this.crouchTarget = this.crouchTarget ? 0 : 1;
-    const wantSprint = input.down('ShiftLeft') || input.down('ShiftRight');
+    const f = (input.act('forward') ? 1 : 0) - (input.act('back') ? 1 : 0);
+    const s = (input.act('right') ? 1 : 0) - (input.act('left') ? 1 : 0);
+    if (input.actHit('crouch')) this.crouchTarget = this.crouchTarget ? 0 : 1;
+    const wantSprint = input.act('sprint');
     const moving = f !== 0 || s !== 0;
     if (wantSprint && moving && this.crouchTarget) this.crouchTarget = 0;
     const canSprint = wantSprint && f > 0 && !this.exhausted && this.stamina > 0.02 && this.crouch < 0.3;
@@ -119,9 +119,9 @@ export class Player {
   // espirito: anda sem ruido nem estamina e atravessa paredes, portas e moveis (so a barreira externa do predio o segura)
   _updateGhost(dt, input) {
     const g = this.game.grid;
-    const f = (input.down('KeyW') || input.down('ArrowUp') ? 1 : 0) - (input.down('KeyS') || input.down('ArrowDown') ? 1 : 0);
-    const s = (input.down('KeyD') || input.down('ArrowRight') ? 1 : 0) - (input.down('KeyA') || input.down('ArrowLeft') ? 1 : 0);
-    const speed = input.down('ShiftLeft') || input.down('ShiftRight') ? 5.2 : 3.2;
+    const f = (input.act('forward') ? 1 : 0) - (input.act('back') ? 1 : 0);
+    const s = (input.act('right') ? 1 : 0) - (input.act('left') ? 1 : 0);
+    const speed = input.act('sprint') ? 5.2 : 3.2;
     const len = Math.hypot(f, s) || 1, moving = f !== 0 || s !== 0;
     const sin = Math.sin(this.yaw), cos = Math.cos(this.yaw);
     this.vel.x = damp(this.vel.x, (-sin * f + cos * s) / len * speed * (moving ? 1 : 0), 8, dt);
@@ -181,7 +181,7 @@ export class Player {
   _updateHidden(dt, input) {
     const spot = this.hidden;
     const wasHolding = this.holdingBreath;
-    this.holdingBreath = input.down('Space') && this.breath > 0 && !this.gasped;
+    this.holdingBreath = input.act('breath') && this.breath > 0 && !this.gasped;
     if (this.holdingBreath) {
       this.breath -= dt / this.game.cfg.HOLD_BREATH;
       if (this.breath <= 0) {

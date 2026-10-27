@@ -25,11 +25,13 @@ Nada aqui foi feito por mim nas suas contas: você executa os passos. Não há s
 
 ## 4. Voz (chat e eco de voz)
 - Chat de voz: WebRTC direto entre jogadores; usa STUN público. Em redes restritivas (4G/CGNAT/empresas) pode falhar sem servidor **TURN**. Opções: coturn próprio (`TURN_URLS` + `TURN_SECRET` no Render) ou um serviço TURN de terceiros (`ICE_SERVERS_JSON`). Isso pode ter custo; o jogo funciona sem, com essa limitação.
+- **Ninguém se ouve?** Na partida, abra o menu (Esc) > painel **Voz**: ele lista cada jogador como `conectado`, `conectando…` ou `sem conexão`. Se aparecer `sem conexão`, é a rede (precisa de TURN). Passo a passo com serviço gratuito de terceiros: crie uma conta num provedor TURN (ex.: Open Relay da Metered, ou Cloudflare Realtime TURN), copie as credenciais e, no painel do Render > Environment, crie `ICE_SERVERS_JSON` com `[{"urls":"stun:stun.l.google.com:19302"},{"urls":["turn:HOST:80","turn:HOST:443?transport=tcp"],"username":"USUARIO","credential":"SENHA"}]` (troque HOST/USUARIO/SENHA pelos dados do provedor) e faça Manual Deploy. O jogo busca essa lista em `GET /ice`; não precisa mexer no cliente.
+- Modo do microfone: no painel Voz, **Microfone aberto** ou **Apertar para falar** (tecla configurável, padrão V). O ícone de alto-falante aparece ao lado do nome de quem está falando, no canto inferior esquerdo.
 - Eco de voz (criatura imitando a voz de quem autoriza): opcional; o navegador baixa ~146 MB do Hugging Face só se o jogador autorizar. Para hospedar você mesmo, use `mimicModelBase` em `runtime-config.js`. Créditos/licenças: `vendor/NOTICE.md`.
 
 ## 5. Verificar depois de publicar
 1. Abra o site: aparece o título; Normal/Hardcore funcionam sozinhos.
-2. Online: "Conectado" (na primeira vez, aguarde o servidor acordar). Crie sala em uma aba e entre com o código em outra/outro aparelho; a 5ª pessoa deve ser recusada.
+2. Online: "Conectado" (na primeira vez, aguarde o servidor acordar). Crie sala em uma aba e entre com o código em outra/outro aparelho; a 5ª pessoa entra como espectador (fila) e a 11ª é recusada.
 3. Inicie a partida, permita o microfone e confirme que os outros ouvem (perto natural, longe rádio). Teste em redes diferentes.
 4. Se não conectar: F12 > Console/Rede. 403 = `ALLOWED_ORIGINS` diferente da origem real do site.
 

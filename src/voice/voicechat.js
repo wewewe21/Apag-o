@@ -24,7 +24,9 @@ export class VoiceChat {
     this.me = null; this.statusOf = new Map();    // id -> 'alive'|'dead'|'escaped'|'left'
     this.online = new Set();
     this.micStatus = 'off'; this.micStream = null; this.micTrack = null; this.muted = false;
-    this.prefs = { volume: 1, deviceId: '' };
+    this.prefs = { volume: 1, deviceId: '', mode: 'open' };        // mode: 'open' (microfone aberto) | 'ptt' (apertar para falar)
+    this.pttDown = false; this.transmitting = false; this.mySpeaking = false; this._myLast = -9;
+    this._sigQ = [];             // sinalizacao que chegou antes de a voz estar pronta (nao pode ser perdida)
     try { Object.assign(this.prefs, JSON.parse(localStorage.getItem(PREF_KEY) || '{}')); } catch { /* ok */ }
     this.running = false; this.iceServers = null;
     this.noiseBuf = null; this.bus = null;
@@ -35,13 +37,16 @@ export class VoiceChat {
   start(me, players) {
     this.running = true; this.me = me;
     this._ensureBus();
+    try { this.audio.ctx?.resume?.(); } catch { /* ok */ }
     this.setPlayers(players);
     this._ice();
+    const now = performance.now();
+    for (const [m, t] of this._sigQ.splice(0)) if (now - t < 20000) this.onSignal(m);       // ofertas que chegaram enquanto este cliente ainda carregava (as velhas de outra rodada nao valem)
     this._emit();
   }
 
   stop() {
-    this.running = false;
+    this.running = false; this._sigQ.length = 0;
     for (const id of [...this.peers.keys()]) this._close(id);
     this.releaseMic();
     this._emit();
@@ -50,6 +55,8 @@ export class VoiceChat {
   // libera o microfone e encerra as conexoes ao sair da sala / voltar ao menu
   releaseMic() {
     try { this.micStream?.getTracks().forEach(t => t.stop()); } catch { /* ok */ }
+    try { this.selfSrc?.disconnect(); } catch { /* ok */ }
+    this.selfSrc = null; this.selfAn = null; this.mySpeaking = false; this.transmitting = false;
     this.micStream = null; this.micTrack = null;
     if (this.micStatus === 'on' || this.micStatus === 'muted') this.micStatus = 'off';
   }
@@ -85,7 +92,8 @@ export class VoiceChat {
       this.releaseMic();
       this.micStream = stream; this.micTrack = stream.getAudioTracks()[0];
       if (!this.micTrack) { this._mic('nodevice'); return false; }
-      this.micTrack.enabled = !this.muted;
+      this._applyTrack();
+      this._selfMeter(stream);
       this.micTrack.onended = () => { this._mic('error'); this.micTrack = null; for (const p of this.peers.values()) p.setTrack(null); };
       if (deviceId) this.prefs.deviceId = deviceId;
       this._save();
@@ -103,9 +111,29 @@ export class VoiceChat {
     try { return (await (this.media || navigator.mediaDevices).enumerateDevices()).filter(d => d.kind === 'audioinput'); } catch { return []; }
   }
 
+  // O microfone so transmite quando deve: aberto (e nao mudo) ou, no modo "apertar para falar", enquanto a tecla esta segura
+  _applyTrack() {
+    const open = !this.muted && (this.prefs.mode !== 'ptt' || this.pttDown);
+    if (this.micTrack) this.micTrack.enabled = open;
+    const t = open && !!this.micTrack;
+    if (t !== this.transmitting) { this.transmitting = t; this._emit(); }
+  }
+  setMode(mode) { this.prefs.mode = mode === 'ptt' ? 'ptt' : 'open'; this._save(); this._applyTrack(); this._emit(); }
+  setPtt(down) { down = !!down; if (down === this.pttDown) return; this.pttDown = down; this._applyTrack(); }
+
+  // medidor do PROPRIO microfone (so para o icone de "estou falando"; o audio nao sai daqui)
+  _selfMeter(stream) {
+    try {
+      const ctx = this.audio.ctx; if (!ctx) return;
+      this.selfSrc = ctx.createMediaStreamSource(stream);
+      this.selfAn = ctx.createAnalyser(); this.selfAn.fftSize = 512; this._selfBuf = new Float32Array(512);
+      this.selfSrc.connect(this.selfAn);
+    } catch { this.selfAn = null; }
+  }
+
   setMuted(m) {
     this.muted = !!m;
-    if (this.micTrack) { this.micTrack.enabled = !this.muted; this._mic(this.muted ? 'muted' : 'on'); }
+    if (this.micTrack) { this._applyTrack(); this._mic(this.muted ? 'muted' : 'on'); }
     this._emit();
   }
   toggleMute() {
@@ -116,7 +144,7 @@ export class VoiceChat {
 
   _mic(s) { this.micStatus = s; this._emit(); }
   _save() { try { localStorage.setItem(PREF_KEY, JSON.stringify(this.prefs)); } catch { /* ok */ } }
-  _emit() { this.onChange?.({ mic: this.micStatus, muted: this.muted, peers: this.peers.size, volume: this.prefs.volume }); }
+  _emit() { this.onChange?.({ mic: this.micStatus, muted: this.muted, peers: this.peers.size, volume: this.prefs.volume, mode: this.prefs.mode, transmitting: this.transmitting }); }
 
   // ---------- quem pode falar com quem ----------
   setPlayers(players) {
@@ -149,7 +177,8 @@ export class VoiceChat {
 
   // mensagem de sinalizacao vinda do servidor
   onSignal(m) {
-    if (!this.running || !this.allowed(m.from)) return;        // recusa sinalizacao de quem nao pode falar comigo
+    if (!this.running) { if (this._sigQ.length < 80) this._sigQ.push([m, performance.now()]); return; }          // ainda carregando: guarda para quando comecar
+    if (!this.allowed(m.from)) return;        // recusa sinalizacao de quem nao pode falar comigo
     let p = this.peers.get(m.from);
     if (!p) { this._open(m.from).then(() => this.peers.get(m.from)?.handle(m.data)); return; }
     p.handle(m.data);
@@ -160,7 +189,18 @@ export class VoiceChat {
   update(dt, now, listenerPos, posOf, occludedFn) {
     if (!this.running) return;
     let anySpeaking = false;
+    if (this.selfAn) {
+      this.selfAn.getFloatTimeDomainData(this._selfBuf);
+      let s = 0; for (let i = 0; i < this._selfBuf.length; i++) s += this._selfBuf[i] * this._selfBuf[i];
+      if (this.transmitting && Math.sqrt(s / this._selfBuf.length) > VOICE.speakThreshold) this._myLast = now;
+      this.mySpeaking = this.transmitting && now - this._myLast < VOICE.noiseHold;
+    }
     for (const [id, p] of this.peers) {
+      // conexao que nao fecha: o iniciador tenta de novo (a oferta ou os candidatos podem ter se perdido)
+      if (p.state !== 'connected') {
+        p.stuck = (p.stuck || 0) + dt;
+        if (p.initiator && p.stuck > 7 && p.restarts < 4 && !p.closed) { p.stuck = 0; p.restarts++; p.negotiate(true); }
+      } else p.stuck = 0;
       if (!p.radio) continue;
       p.radio.measure(now);
       const pos = posOf(id);
@@ -177,6 +217,10 @@ export class VoiceChat {
   speaking(id) { return !!this.peers.get(id)?.radio?.speaking; }
   connected(id) { return this.peers.get(id)?.state === 'connected'; }
   stateOf(id) { return this.peers.get(id)?.state || 'none'; }
+  // resumo por pessoa para a tela de voz: 'ok' | 'wait' | 'fail'
+  peerSummary() {
+    return [...this.peers].map(([id, p]) => ({ id, state: p.state === 'connected' ? 'ok' : (p.state === 'failed' || (p.stuck > 12 && p.restarts >= 2)) ? 'fail' : 'wait' }));
+  }
 }
 
 class VoicePeer {

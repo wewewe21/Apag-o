@@ -47,8 +47,8 @@ export class Flashlight {
 
   update(dt, input, blocked) {
     if (!blocked) {
-      if (input.hit('KeyF')) this.toggle();
-      if (input.hit('KeyR') && this.on && this.battery < F.lowBattery * 1.5) {
+      if (input.actHit('flashlight')) this.toggle();
+      if (input.actHit('battery') && this.on && this.battery < F.lowBattery * 1.5) {
         // bater a lanterna: recupera o feixe por alguns segundos
         this.shakeBoost = 2.5; this.game.audio?.thump();
       }

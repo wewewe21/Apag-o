@@ -26,7 +26,10 @@ Trilha e efeitos gerados com ElevenLabs: [docs/AUDIO.md](docs/AUDIO.md). São 6 
 | R | bater a lanterna (bateria fraca) |
 | Tab | objetivo atual |
 | M | planta do prédio (depois de pegá-la na recepção) |
-| Esc | pausa e opções (sensibilidade, volume, qualidade, inverter Y) |
+| V | falar, no modo "apertar para falar" (online) |
+| Esc | pausa e opções (sensibilidade, volume, qualidade, inverter Y, **Teclas** e voz) |
+
+Todas as teclas podem ser trocadas em Esc > Teclas (2 teclas por ação; Esc e os botões do mouse são fixos). Com o mouse capturado, o teclado também é do jogo: Ctrl+tecla, Alt e F5 não chegam ao navegador.
 
 Dicas: fusíveis no bolso se perdem se você morrer — instale-os no quadro geral (salva o progresso). Luz forte faz a criatura hesitar. Se ela te vir entrando no esconderijo, não adianta.
 
@@ -66,7 +69,7 @@ Para criar um movimento novo: adicione uma linha em `$clips` no `gerar_animacoes
 
 ## Online, voz e publicação
 
-- Cooperativo online (até 4 jogadores, 7 fusíveis, uma vida cada), chat de voz por proximidade e "eco de voz" opcional: veja [docs/PUBLICAR.md](docs/PUBLICAR.md) para publicar o cliente no GitHub Pages e o servidor no Render gratuito.
+- Cooperativo online (4 jogadores, 7 fusíveis, uma vida cada; até 10 pessoas na sala, os 6 extras entram só como espectadores/espíritos e formam uma fila para a próxima rodada), chat de voz por proximidade (microfone aberto ou apertar para falar) e "eco de voz" opcional: veja [docs/PUBLICAR.md](docs/PUBLICAR.md) para publicar o cliente no GitHub Pages e o servidor no Render gratuito.
 - Servidor local: `npm ci` e `npm start` (porta 8080). Cliente: `python tools/serve.py` ou `npm run build:client` (gera `dist/`).
 - `npm test` roda todos os testes automáticos sem navegador. Créditos de terceiros: [vendor/NOTICE.md](vendor/NOTICE.md).
 - Modos solo: **Normal** (salva ao instalar fusível e mantém os instalados após morrer) e **Hardcore** (morreu, recomeça do zero, sem checkpoints; não apaga o save do Normal).

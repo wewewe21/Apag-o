@@ -24,6 +24,7 @@ import { PostFX } from './fx/postfx.js';
 import { Particles } from './fx/particles.js';
 import { CreatureFx } from './fx/creaturefx.js';
 import { Hud } from './ui/hud.js';
+import { BindsUI } from './ui/bindsui.js';
 import { OnlineController } from './net/online.js';
 
 const $ = (id) => document.getElementById(id);
@@ -326,7 +327,7 @@ class Game {
     if (save) this.applySave(save);
     else {
       this.hud.objective('A porta travou atrás de você. Restaure a energia: encontre os 5 fusíveis.', 9);
-      setTimeout(() => this.hud.toast('[F] lanterna · [Botão direito] foco · [E] interagir · [Tab] objetivo', 7), 2500);
+      setTimeout(() => this.hud.toast(`[${this.input.label('flashlight')}] lanterna · [Botão direito] foco · [${this.input.label('interact')}] interagir · [${this.input.label('objective')}] objetivo`, 7), 2500);
     }
     this.lastCheckpoint = this.makeSave();
     $('loading').hidden = true;
@@ -521,7 +522,7 @@ class Game {
     item.taken = true; item.mesh.visible = false;
     this.player.inventory.map = true;
     this.audio.pickup('map');
-    this.hud.toast('Planta de evacuação. [M] para consultar.', 4);
+    this.hud.toast(`Planta de evacuação. [${this.input.label('map')}] para consultar.`, 4);
   }
   openMap() {
     if (!this.player.inventory.map) { this.hud.toast('Você não tem uma planta do prédio. Há uma na parede da recepção.'); return; }
@@ -761,6 +762,7 @@ class Game {
   }
 
   _bindUI() {
+    this.binds = new BindsUI(this.input, () => this.online?.voiceKeysChanged?.());       // menu "Teclas" e dicas com as teclas atuais
     const hasSave = !!loadSave();
     $('btnContinue').hidden = !hasSave;
     $('btnStart').onclick = () => this.start(false, 'normal');
@@ -803,8 +805,8 @@ class Game {
     const inp = this.input;
 
     // teclas globais
-    if (this.state === 'reading' && (inp.hit('KeyE') || inp.hit('Escape') || inp.hit('Space'))) this.closeNote();
-    else if (this.state === 'map' && (inp.hit('KeyM') || inp.hit('Escape') || inp.hit('Tab'))) this.closeMap();
+    if (this.state === 'reading' && (inp.actHit('interact') || inp.hit('Escape') || inp.actHit('breath'))) this.closeNote();
+    else if (this.state === 'map' && (inp.actHit('map') || inp.hit('Escape') || inp.actHit('objective'))) this.closeMap();
     else if (this.state === 'paused' && inp.hit('Escape')) this.resume();
     if (inp.hit('F3')) { this.debugOn = !this.debugOn; $('debug').hidden = !this.debugOn; }
 
@@ -830,11 +832,11 @@ class Game {
     if (this.online) this.online.update(dt);
     // ---------- entrada de jogo ----------
     if (playing) {
-      if (inp.hit('Tab')) this.hud.objective(this.currentObjective(), 5);
-      if (inp.hit('KeyM')) { this.openMap(); return; }
+      if (inp.actHit('objective')) this.hud.objective(this.currentObjective(), 5);
+      if (inp.actHit('map')) { this.openMap(); return; }
       if (inp.hit('Escape') && this.input.dragLook) { this.pause(); return; }
     }
-    p.update(dt, playing ? inp : { mouse: { dx: 0, dy: 0 }, down: () => false, hit: () => false });
+    p.update(dt, playing ? inp : { mouse: { dx: 0, dy: 0 }, down: () => false, hit: () => false, act: () => false, actHit: () => false, actUp: () => false });
     fl.update(dt, inp, !playing || !!p.hidden || p.ghost);
     if (p.hidden) fl.on = fl.on && p.hidden.type !== 'locker' ? fl.on : fl.on;
 
@@ -843,14 +845,14 @@ class Game {
     if (playing && p.ghost) this.hud.prompt(null);
     else if (playing) {
       if (p.hidden) {
-        this.hud.prompt(this.hidePrompt(p.hidden));
-        if (inp.hit('KeyE')) this.toggleHide(p.hidden);
+        this.hud.prompt(this.hidePrompt(p.hidden), inp.label('interact'));
+        if (inp.actHit('interact')) this.toggleHide(p.hidden);
       } else {
         target = this.findInteractable();
         const text = target ? target.prompt(this) : null;
-        this.hud.prompt(text, target?.hold?.() ? 'Segure E' : 'E');
-        if (target && inp.hit('KeyE') && !(target.hold && target.hold())) target.use(this);
-        this.objectives.holdUpdate(dt, target?.kind === 'panel' && inp.down('KeyE'));
+        this.hud.prompt(text, target?.hold?.() ? 'Segure ' + inp.label('interact') : inp.label('interact'));
+        if (target && inp.actHit('interact') && !(target.hold && target.hold())) target.use(this);
+        this.objectives.holdUpdate(dt, target?.kind === 'panel' && inp.act('interact'));
       }
     } else this.hud.prompt(null);
 

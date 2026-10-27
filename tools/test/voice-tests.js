@@ -160,3 +160,68 @@ export async function micErrors() {
   out.ok = out.negado.status === 'denied' && out.sem_dispositivo.status === 'nodevice' && out.em_uso.status === 'busy' && out.outro.status === 'error' && out.sem_api.status === 'unsupported' && Object.values(out).slice(0, 4).every(o => o.running);
   return out;
 }
+
+// ---- modo "apertar para falar", icone de "estou falando" e oferta que chega antes de a voz estar pronta ----
+async function pair(freqA = 200, freqB = 330) {
+  const ctxA = new AudioContext(), ctxB = new AudioContext(); await ctxA.resume().catch(() => {}); await ctxB.resume().catch(() => {});
+  const audio = (c) => ({ ctx: c, master: c.destination, duckBeat() {} });
+  let A, B;
+  const bus = (from) => (to, data) => setTimeout(() => (to === 1 ? A : B).onSignal({ from, data }), 5);
+  const mk = (id, c, f) => new VoiceChat({ audio: audio(c), game: {}, signal: (to, data) => bus(id)(to, data), ice: async () => [], media: fakeMedia(c, f), RTC: RTCPeerConnection });
+  A = mk(1, ctxA, freqA); B = mk(2, ctxB, freqB);
+  const players = [{ id: 1, status: 'alive', online: true }, { id: 2, status: 'alive', online: true }];
+  return { A, B, players };
+}
+const level = async (vc, fromId, ms = 800) => {
+  let m = 0; const t0 = performance.now();
+  while (performance.now() - t0 < ms) { const p = vc.peers.get(fromId); p?.radio?.measure(performance.now() / 1000); m = Math.max(m, p?.radio?.level || 0); await wait(40); }
+  return m;
+};
+
+export async function ptt() {
+  const { A, B, players } = await pair();
+  const res = { checks: {} };
+  A.start(1, players); B.start(2, players); await A.enableMic(); await B.enableMic();
+  const t0 = performance.now(); while (performance.now() - t0 < 8000 && !(A.connected(2) && B.connected(1))) await wait(100);
+  res.checks.conectou = A.connected(2) && B.connected(1);
+  res.checks.aberto_transmite = A.transmitting && (await level(B, 1)) > 0.01;
+  A.setMode('ptt'); await wait(300);
+  res.checks.ptt_solto_nao_transmite = !A.transmitting && A.micTrack.enabled === false;
+  const quiet = await level(B, 1); res.silencio = +quiet.toFixed(4);
+  res.checks.ptt_solto_silencio = quiet < 0.004;
+  A.setPtt(true); await wait(400);
+  res.checks.ptt_apertado_transmite = A.transmitting && A.micTrack.enabled === true;
+  const loud = await level(B, 1); res.voz = +loud.toFixed(4);
+  res.checks.ptt_apertado_audio_chega = loud > 0.01;
+  // icone de "estou falando" (medidor do proprio microfone)
+  let me = false; for (let i = 0; i < 20 && !me; i++) { A.update(0.05, performance.now() / 1000, { x: 0, y: 0, z: 0 }, () => null); me = A.mySpeaking; await wait(50); }
+  res.checks.icone_proprio_acende = me;
+  A.setPtt(false); await wait(700);
+  A.update(0.05, performance.now() / 1000, { x: 0, y: 0, z: 0 }, () => null);
+  res.checks.icone_proprio_apaga = !A.mySpeaking && !A.transmitting;
+  // mudo vence o ptt
+  A.setPtt(true); A.setMuted(true); await wait(300);
+  res.checks.mudo_vence_ptt = !A.transmitting && A.micTrack.enabled === false;
+  A.setMuted(false); A.setPtt(false);
+  A.stop(); B.stop();
+  res.ok = Object.values(res.checks).every(Boolean);
+  return res;
+}
+
+export async function lateOffer() {
+  const { A, B, players } = await pair();
+  const res = { checks: {} };
+  A.start(1, players); await A.enableMic();          // A (menor id) ja oferece; B ainda esta carregando
+  await wait(600);
+  res.checks.oferta_guardada = B._sigQ.length > 0 && B.peers.size === 0;
+  B.start(2, players); await B.enableMic();           // B comeca depois: usa o que chegou
+  const t0 = performance.now(); while (performance.now() - t0 < 8000 && !(A.connected(2) && B.connected(1))) await wait(100);
+  res.checks.conectou_mesmo_assim = A.connected(2) && B.connected(1);
+  res.conectouMs = Math.round(performance.now() - t0);
+  // sobras de uma rodada anterior nao voltam: stop() limpa a fila
+  B.onSignal({ from: 1, data: { ice: { candidate: 'x' } } });
+  B.stop(); res.checks.stop_limpa_fila = B._sigQ.length === 0;
+  A.stop();
+  res.ok = Object.values(res.checks).every(Boolean);
+  return res;
+}

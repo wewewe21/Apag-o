@@ -65,7 +65,7 @@ export class OnlineController {
     on('lost', () => this._fatal('Não foi possível reconectar ao servidor. A partida foi encerrada para você.'));
     on('replaced', () => this._fatal('Você conectou em outra aba: esta sessão foi encerrada.'));
     on('role', this._role);
-    on('voice', (m) => this.voice?.onSignal(m));
+    on('voice', (m) => this._ensureVoice().onSignal(m));       // o objeto de voz existe desde a primeira mensagem (nada de oferta perdida)
     on('mimic', (m) => { this.mimic.me = this.me; this.mimic.receive(m); });
   }
 
@@ -595,19 +595,27 @@ export class OnlineController {
     return (await r.json()).iceServers;
   }
 
-  _startVoice(m) {
-    const g = this.g;
+  _ensureVoice() {
     if (!this.voice) {
+      const g = this.g;
       this.voice = new VoiceChat({ audio: g.audio, game: g, signal: (to, data) => this.net.send({ t: 'voice', to, data }), ice: () => this._ice() });
       this._bindVoiceUi();
+      this.voice.onChange = () => this._voiceUi();
     }
-    this.voice.onChange = () => this._voiceUi();
-    this.voice.start(this.me, m.players);
+    return this.voice;
+  }
+
+  _startVoice(m) {
+    const vc = this._ensureVoice();
+    vc.start(this.me, m.players);
     $('voicebar').hidden = false;
     // o navegador pede a permissao do microfone aqui; se negar (ou nao houver), a partida segue normalmente
-    this.voice.enableMic().then(() => this._voiceUi());
+    if (!vc.micTrack) vc.enableMic().then(() => this._voiceUi());
     this._voiceUi();
   }
+
+  // trocou uma tecla nas opcoes: atualiza os textos da voz
+  voiceKeysChanged() { this._voiceUi(); }
 
   _bindVoiceUi() {
     const v = () => this.voice;
@@ -616,6 +624,8 @@ export class OnlineController {
     $('vpMute').onclick = () => v().toggleMute();
     $('vpEnable').onclick = async () => { await v().enableMic($('vpDevice').value); this._fillDevices(); };
     $('vpVol').oninput = (e) => v().setVolume(e.target.value);
+    $('vpMode').onchange = (e) => { v().setMode(e.target.value); this._voiceUi(); };
+    $('vpPttKey').onclick = () => this.g.binds?.listen('ptt', 0, $('vpPttKey'));
     $('vpDevice').onchange = (e) => v().enableMic(e.target.value);
   }
 
@@ -627,28 +637,41 @@ export class OnlineController {
 
   _voiceUi() {
     const vc = this.voice; if (!vc) return;
-    const on = vc.micStatus === 'on', muted = vc.micStatus === 'muted';
-    $('btnMic').textContent = muted ? 'Mic mudo' : on ? 'Mic ativo' : 'Mic';
+    const on = vc.micStatus === 'on', muted = vc.micStatus === 'muted', ptt = vc.prefs.mode === 'ptt', key = this.g.input.label('ptt');
+    $('btnMic').textContent = muted ? 'Mic mudo' : on ? (ptt ? `Falar [${key}]` : 'Mic ativo') : 'Mic';
     $('btnMic').classList.toggle('muted', muted || !on);
+    $('btnMic').classList.toggle('live', vc.transmitting);
+    $('vpMode').value = vc.prefs.mode; $('vpPttRow').hidden = !ptt; $('vpPttKey').textContent = key;
+    this._peerList(vc);
     $('voiceState').textContent = vc.micStatus === 'denied' || vc.micStatus === 'nodevice' || vc.micStatus === 'unsupported' || vc.micStatus === 'error' || vc.micStatus === 'busy' ? 'sem mic' : `voz ${vc.peers.size}`;
     $('voicePanel').hidden = !this.inMatch;
-    $('vpStatus').textContent = MIC_STATUS[vc.micStatus] + (vc.peers.size ? ` · ${[...vc.peers.keys()].filter(id => vc.connected(id)).length}/${vc.peers.size} conectados` : '');
+    $('vpStatus').textContent = MIC_STATUS[vc.micStatus] + (on && ptt ? ` — segure ${key} para falar` : '') + (vc.peers.size ? ` · ${[...vc.peers.keys()].filter(id => vc.connected(id)).length}/${vc.peers.size} conectados` : '');
     $('vpStatus').className = 'status ' + (on ? 'ok' : muted ? '' : 'err');
     $('vpMute').textContent = muted ? 'Ativar meu microfone' : 'Silenciar meu microfone';
     $('vpVol').value = vc.prefs.volume;
     $('vpEnable').hidden = on || muted;
   }
 
+  // quem esta conectado por voz (ajuda a descobrir quando a rede de alguem bloqueia a voz)
+  _peerList(vc) {
+    const el = $('vpPeers'); if (!el) return;
+    const names = { ok: 'conectado', wait: 'conectando…', fail: 'sem conexão' };
+    const sum = vc.peerSummary();
+    const line = (s) => `${(this.players.get(s.id)?.name || this.remote?.name(s.id) || '?').replace(/[&<>]/g, '')}: ${names[s.state]}`;
+    el.innerHTML = sum.map(line).join('<br>') + (sum.some(s => s.state === 'fail') ? '<br><b>Sem voz com alguém:</b> a rede dele (ou a sua) bloqueia a voz direta. Isso se resolve com um servidor TURN no servidor do jogo (docs/PUBLICAR.md).' : '');
+  }
+
   _voiceUpdate(dt, now) {
     const vc = this.voice;
     if (!vc || !vc.running) return;
     const g = this.g, cam = g.camera.position;
+    vc.setPtt(g.input.act('ptt'));
     vc.update(dt, now, cam,
       (id) => { const a = this.remote?.avatars.get(id); return a ? a.group.position : null; },
       (pos) => !g.grid.segmentClear(cam.x, cam.z, pos.x, pos.z, true));
     // marca quem esta falando no quadro de jogadores
     this._talkT = (this._talkT || 0) + dt;
-    if (this._talkT > 0.3) { this._talkT = 0; const key = [...vc.peers.keys()].filter(id => vc.speaking(id)).join(); if (key !== this._talkKey) { this._talkKey = key; this._roster(); } }
+    if (this._talkT > 0.15) { this._talkT = 0; const key = [...vc.peers.keys()].filter(id => vc.speaking(id)).join() + (vc.mySpeaking ? '+me' : ''); if (key !== this._talkKey) { this._talkKey = key; this._roster(); } }
   }
 
   // ---------------- falhas fatais ----------------

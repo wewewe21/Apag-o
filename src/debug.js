@@ -1,6 +1,7 @@
 // Ferramentas de depuracao/teste (carregadas com ?debug na URL). Uso no console: dbg.tp(25, 20)
 import * as THREE from 'three';
 import { CELL } from './config.js';
+import { defaultBinds } from './core/keybinds.js';
 
 export function installDebug(game) {
   const fake = () => {
@@ -9,6 +10,7 @@ export function installDebug(game) {
       keys, hits,
       mouse: { dx: 0, dy: 0, left: false, right: false, leftPressed: false, rightPressed: false },
       down: (c) => keys.has(c), hit: (c) => hits.has(c), up: () => false,
+      act: (id) => (defaultBinds()[id] || []).some(c => c && keys.has(c)), actHit: (id) => (defaultBinds()[id] || []).some(c => c && hits.has(c)), actUp: () => false,
       endFrame() { hits.clear(); this.mouse.dx = this.mouse.dy = 0; },
     };
   };

@@ -5,9 +5,12 @@
 //  - um erro transitorio (Esc seguido de outro pedido, aba sem foco, gesto expirado) NAO desliga o
 //    pointer lock para sempre: o jogo mostra "clique para capturar" e tenta de novo no proximo clique;
 //  - ao perder o foco/travamento todo estado de teclas e botoes e limpo (nada de movimento preso).
+import { loadBinds, saveBinds, defaultBinds, assign, keyLabel } from './keybinds.js';
+
 export class Input {
   constructor(el) {
     this.el = el;
+    this.binds = loadBinds();     // acao -> [tecla1, tecla2] (configuravel; ver keybinds.js)
     this.keys = new Set();
     this.pressed = new Set();     // apertadas neste quadro
     this.released = new Set();
@@ -156,6 +159,13 @@ export class Input {
   down(code) { return this.keys.has(code); }
   hit(code) { return this.pressed.has(code); }
   up(code) { return this.released.has(code); }
+  // por ACAO (respeita as teclas escolhidas pelo jogador)
+  act(id) { for (const c of this.binds[id] || []) if (c && this.keys.has(c)) return true; return false; }
+  actHit(id) { for (const c of this.binds[id] || []) if (c && this.pressed.has(c)) return true; return false; }
+  actUp(id) { for (const c of this.binds[id] || []) if (c && this.released.has(c)) return true; return false; }
+  label(id) { return keyLabel((this.binds[id] || [])[0] || (this.binds[id] || [])[1]); }
+  setBind(id, slot, code) { const r = assign(this.binds, id, slot, code); saveBinds(this.binds); this.clearState(); return r; }
+  resetBinds() { this.binds = defaultBinds(); saveBinds(this.binds); this.clearState(); }
   endFrame() {
     this.pressed.clear(); this.released.clear();
     this.mouse.dx = this.mouse.dy = 0;
