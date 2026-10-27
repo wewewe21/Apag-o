@@ -23,11 +23,18 @@ export class Input {
     if (!this.lockSupported) this.dragLook = true;
 
     addEventListener('keydown', (e) => {
+      // com o jogo capturado, o teclado e do jogo: Ctrl+tecla, Alt, F-teclas nao chegam ao navegador (nem nas repeticoes)
+      if (this._ownsKeys(e)) e.preventDefault();
       if (e.repeat) return;
       this.keys.add(e.code); this.pressed.add(e.code);
       if (this.enabled && ['Space', 'Tab', 'KeyF', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault();
     });
-    addEventListener('keyup', (e) => { this.keys.delete(e.code); this.released.add(e.code); });
+    addEventListener('keyup', (e) => {
+      if (this._ownsKeys(e)) e.preventDefault();      // soltar Alt sozinho tambem abre o menu do navegador
+      this.keys.delete(e.code); this.released.add(e.code);
+    });
+    // Ctrl + roda do mouse daria zoom na pagina
+    addEventListener('wheel', (e) => { if (e.ctrlKey && this.locked) e.preventDefault(); }, { passive: false });
     // perdeu o foco (Alt+Tab, troca de aba, clique fora): solta tudo para nao ficar andando sozinho
     addEventListener('blur', () => this.clearState());
     document.addEventListener('visibilitychange', () => { if (document.hidden) this.clearState(); });
@@ -58,11 +65,37 @@ export class Input {
     document.addEventListener('pointerlockerror', () => { /* tratado em requestLock(); um erro isolado nao muda o modo */ });
   }
 
+  // O jogo e dono do teclado? Sim enquanto o mouse esta capturado (Esc sempre devolve o controle ao navegador).
+  // Sem pointer lock (modo arrastar) so seguramos combinacoes com Ctrl/Alt/Meta, e nunca dentro de campos de texto.
+  _ownsKeys(e) {
+    if (e.code === 'Escape' || e.code === 'F11' || e.code === 'F12') return false;
+    if (this.locked) return true;
+    if (!this.enabled || !this.dragLook || !(e.ctrlKey || e.altKey || e.metaKey)) return false;
+    const t = e.target, tag = t && t.tagName;
+    return !(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable));
+  }
+
+  // Keyboard Lock API (Chrome/Edge): em tela cheia entrega ao jogo ate atalhos reservados, como Ctrl+W.
+  // Esc fica de fora de proposito: e a saida. Se o navegador nao suportar, o preventDefault acima ja cobre o resto.
+  _keyboardLock(on) {
+    const kb = navigator.keyboard;
+    if (!kb || typeof kb.lock !== 'function') return;
+    try {
+      if (on) {
+        const p = kb.lock(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'KeyR', 'KeyF', 'KeyC', 'KeyT', 'KeyN',
+          'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'ShiftLeft', 'ShiftRight', 'Tab', 'Space',
+          'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
+        if (p && p.catch) p.catch(() => { /* sem tela cheia / sem suporte: segue so com preventDefault */ });
+      } else kb.unlock();
+    } catch { /* ok */ }
+  }
+
   // reflete o estado real do navegador; e idempotente (o evento e o fim da promessa podem chegar em qualquer ordem)
   _syncLock() {
     const now = document.pointerLockElement === this.el;
     if (now === this.locked) return;
     this.locked = now;
+    this._keyboardLock(now);
     if (now) { this.dragLook = !this.lockSupported; this._ignoreMoveUntil = performance.now() + 120; this._hardFails = 0; }
     else this.clearState();
     if (this.onLockChange) this.onLockChange(this.locked);
