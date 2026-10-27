@@ -137,7 +137,7 @@ export class Room {
     if (!players.length) return { code: ERR.NOT_READY, msg: 'Nenhum jogador na sala.' };
     this.phase = PHASE.PLAYING; this.lastResult = null;
     for (const m of players) { m.status = 'alive'; m.ready = false; m.offlineAt = null; m.watcher = false; }
-    this.match = new Match(this, players, this.hub.anim);
+    this.match = new Match(this, players, this.hub.anim, this.matchOpts || {});          // matchOpts: so os testes mexem (ex.: fixedFuses)
     for (const w of watchers) { w.ready = false; w.offlineAt = null; this.match.addWatcher(w); }       // espectadores: espirito desde o primeiro segundo
     this.pushState();
     const all = [...players, ...watchers];

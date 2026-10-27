@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { CELL } from '../config.js';
 import { EXTRA_FUSES } from './coop.js';
+import { collectFuseSpots } from './fusespots.js';
 
 const r3 = (v) => Math.round(v * 1000) / 1000;
 const vec = (v) => [r3(v.x), r3(v.y), r3(v.z)];
@@ -46,5 +47,7 @@ export function extractSpec(world) {
     spec.items.push({ key: 'fuse:' + e.id, type: 'fuse', id: e.id, x: r3(s.x), y: r3(s.y + 0.002), z: r3(s.z), extra: true });
   }
   spec.items.sort((a, b) => a.key.localeCompare(b.key));
+  // pontos onde os fusiveis podem aparecer (o servidor sorteia entre eles a cada partida; spec.items traz so a distribuicao padrao)
+  spec.fuseSpots = collectFuseSpots(world);
   return spec;
 }

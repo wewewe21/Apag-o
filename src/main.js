@@ -5,7 +5,7 @@ import * as CFG from './config.js';
 import { Input } from './core/input.js';
 import { Audio } from './core/audio.js';
 import { loadSave, writeSave, clearSave, loadPrefs, savePrefs } from './core/save.js';
-import { clamp, damp, range } from './core/rng.js';
+import { clamp, damp, range, mulberry32 } from './core/rng.js';
 import { World } from './world/world.js';
 import { SECTOR_ORDER } from './world/layout.js';
 import * as P from './world/props.js';
@@ -25,6 +25,7 @@ import { Particles } from './fx/particles.js';
 import { CreatureFx } from './fx/creaturefx.js';
 import { Hud } from './ui/hud.js';
 import { BindsUI } from './ui/bindsui.js';
+import { collectFuseSpots, pickFuseLayout, fuseHints } from './shared/fusespots.js';
 import { OnlineController } from './net/online.js';
 
 const $ = (id) => document.getElementById(id);
@@ -320,6 +321,7 @@ class Game {
     const save = continueSave && mode === 'normal' ? loadSave() : null;
     if (mode === 'normal' && !continueSave) clearSave();      // "novo jogo" do Normal recomeca o save do Normal (o Hardcore nao tem save)
     this._applyModeUi();
+    this.shuffleFuses(save?.fuseSeed);                      // fusiveis em lugares sorteados (o save guarda a semente: continuar mantem os lugares)
     this.player.spawn(this.world.playerStart.x, this.world.playerStart.z, this.world.playerStart.yaw);
     this.stats = { deaths: 0, repels: 0, start: 0 };
     this.haunting.reset(save?.haunting);
@@ -346,6 +348,26 @@ class Game {
     return ok;
   }
 
+  // ---------- fusiveis sorteados (solo) ----------
+  // Sorteia onde ficam os 5 fusiveis desta partida (semente nova, ou a do save) e move tudo no mundo. Online o servidor faz o sorteio.
+  shuffleFuses(seed) {
+    const w = this.world;
+    this.fuseSeed = seed != null ? seed >>> 0 : (Math.random() * 4294967296) >>> 0;
+    const spots = this._fuseSpots || (this._fuseSpots = collectFuseSpots(w));
+    const drawers = w.drawers.map(d => ({ num: d.num, x: d.x, y: d.y, z: w.drawerBank.zf + 0.5 }));
+    const ids = Array.from({ length: this.fusesTotal }, (_, i) => i + 1);
+    const layout = pickFuseLayout(spots, drawers, ids, mulberry32(this.fuseSeed), { basementMax: 1 });
+    w.placeFuses(layout.map(a => ({ id: a.id, x: a.spot.x, y: a.spot.y, z: a.spot.z, drawer: a.drawer })));
+    this.fuseHints = fuseHints(layout, mulberry32(this.fuseSeed ^ 0x9e3779b9), 3);
+  }
+  // online: pistas do Livro de Ocorrencias a partir dos fusiveis que o servidor sorteou (todos leem as mesmas)
+  setFuseHints(items) {
+    const w = this.world, spots = this._fuseSpots || (this._fuseSpots = collectFuseSpots(w));
+    const layout = items.map(it => ({ drawer: it.drawer, spot: it.drawer != null ? { room: 'Necrotério', kind: 'drawer' } : (spots.find(s => Math.hypot(s.x - it.x, s.z - it.z) < 0.08) || { room: 'prédio', kind: null }) }));
+    let h = 7; for (const it of items) h = (Math.imul(h, 31) + Math.round(it.x * 100) + Math.round(it.z * 100)) | 0;
+    this.fuseHints = fuseHints(layout, mulberry32(h >>> 0), 3);
+  }
+
   // ---------- checkpoint ----------
   itemKey(it) { return it.type + ':' + (it.id ?? this.world.items.indexOf(it)); }
   makeSave() {
@@ -361,6 +383,7 @@ class Game {
       creatureActive: this.ai.state !== 'dormant',
       opened: (this.world.drawers || []).filter(d => d.open > 0.5).map(d => d.num),
       haunting: this.haunting?.saveState(),
+      fuseSeed: this.fuseSeed,
     };
   }
   checkpoint(reason) {
@@ -373,7 +396,7 @@ class Game {
     const w = this.world, p = this.player;
     this.haunting.reset(s.haunting);
     for (const id of s.installed) {
-      const it = w.items.find(i => i.type === 'fuse' && i.id === id);
+      const it = w.fuseItem(id);
       if (it) { it.taken = true; it.mesh.visible = false; }
       this.objectives.install(id, true);
     }
@@ -636,7 +659,7 @@ class Game {
     const w = this.world, p = this.player;
     // fusiveis carregados voltam para onde estavam
     for (const id of p.inventory.fuses) {
-      const it = w.items.find(i => i.type === 'fuse' && i.id === id);
+      const it = w.fuseItem(id);
       if (it) { it.taken = false; it.mesh.visible = true; }
     }
     p.inventory.fuses = [];
@@ -670,6 +693,7 @@ class Game {
     const w = this.world, p = this.player, o = this.objectives, u = this.post.uniforms;
     this.audio.reset();
     w.resetState();
+    this.shuffleFuses();                                    // Hardcore recomeca do zero: fusiveis em outros lugares
     o.reset();
     this.audio.stopSiren();
     this.particles.reset(); this.creatureFx.clear();

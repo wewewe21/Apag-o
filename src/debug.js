@@ -138,15 +138,15 @@ export function installDebug(game) {
         return it.taken;
       };
       for (const it of w.items.filter(i => i.type === 'key' || (i.type === 'fuse'))) take(it);
-      // gaveta 13
-      const d13 = w.drawers.find(d => d.num === 13);
+      // gaveta do fusivel (sorteada a cada partida; no padrao e a 13)
+      const d13 = w.drawers.find(d => w.drawerFuse && d.num === w.drawerFuse.num) || w.drawers.find(d => d.num === 13);
       dbg.standNear(new THREE.Vector3(d13.x, d13.y + 0.8, w.drawerBank.zf + 0.1), 1.2);
       dbg.look(d13.x / CELL, (w.drawerBank.zf + 0.02) / CELL, d13.y);
       const td = game.findInteractable();
       log.push(`gaveta: mira="${td && td.prompt(game)}"`);
       if (td) td.use(game);
       for (let i = 0; i < 40; i++) w.update(0.05);
-      if (d13.item) take(d13.item); else log.push('gaveta 13 sem item');
+      if (d13.item) take(d13.item); else log.push(`gaveta ${d13.num} sem item`);
       log.push(`no bolso: ${JSON.stringify(game.player.inventory.fuses)} chave=${game.player.inventory.key}`);
       // quadro geral
       dbg.standNear(game.objectives.pos.clone(), 1.0);

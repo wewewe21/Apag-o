@@ -13,6 +13,18 @@
 export const W = 60;
 export const H = 40;
 
+// Mesinhas de apoio extras (celulas encostadas em UMA parede, longe de portas e esconderijos): dao mais lugares para os fusiveis sorteados
+// a cada partida. Ficam sempre no mapa, com ou sem fusivel em cima (movel de cenario). Nao mexem no rng do mundo (criadas por ultimo).
+export const FUSE_TABLES = [
+  [30, 1], [34, 4],            // sala de autopsia
+  [40, 4], [36, 5],            // almoxarifado
+  [57, 2], [58, 6],            // casa de caldeiras (subsolo)
+  [47, 5],                     // incinerador (subsolo)
+  [40, 16], [34, 13],          // seguranca
+  [36, 26], [40, 23],          // arquivo
+  [12, 23], [17, 26],          // farmacia
+];
+
 export const ZONES = {
   r: { name: 'Recepção',             level: 0,  floor: 'checker',  wall: 'ward',     ceil: 'tiles',    lamp: 'fluor', spacing: 3, sector: 1, broken: 0.25, amb: 'hall' },
   h: { name: 'Corredor Norte',       level: 0,  floor: 'lino',     wall: 'ward',     ceil: 'tiles',    lamp: 'fluor', spacing: 3, sector: 2, broken: 0.45, amb: 'corridor' },

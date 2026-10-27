@@ -90,7 +90,8 @@ export class Hud {
     if (!n) return;
     $('noteTitle').textContent = n.title;
     $('noteMeta').textContent = n.meta;
-    $('noteBody').innerHTML = n.body.map(p => `<p>${p}</p>`).join('') + (n.hand ? `<p class="hand">${n.hand}</p>` : '');
+    const body = n.dynamic ? n.dynamic(this.game.fuseHints) : n.body;       // algumas notas mudam a cada partida (onde estao os fusiveis)
+    $('noteBody').innerHTML = body.map(p => `<p>${p}</p>`).join('') + (n.hand ? `<p class="hand">${n.hand}</p>` : '');
     $('note').hidden = false;
   }
   closeNote() { $('note').hidden = true; }

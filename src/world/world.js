@@ -1,7 +1,7 @@
 // Monta o mundo: arquitetura, portas, moveis, itens, esconderijos, dutos, placas e luzes.
 import * as THREE from 'three';
 import { CELL, WALL_T, WALL_H, BASEMENT_Y } from '../config.js';
-import { buildLayout, ZONES } from './layout.js';
+import { buildLayout, ZONES, FUSE_TABLES } from './layout.js';
 import { Grid } from './grid.js';
 import { buildArchitecture } from './builder.js';
 import { buildTextures, splatTexture, textTexture } from './textures.js';
@@ -226,7 +226,7 @@ export class World {
           } else { pos = new THREE.Vector3(cx, g.levelBase(o.x, o.y), g.cz(o.y)); yaw = 0; }
           pos.y = g.levelBase(o.x, o.y);
           this.addProp(res, pos, yaw, { nav: true });
-          for (let i = 0; i < o.len; i++) { this.surfaces.set(key(o.x + i, o.y), { y: pos.y + res.top, x: g.cx(o.x + i), z: pos.z }); this.occupied.add(key(o.x + i, o.y)); }
+          for (let i = 0; i < o.len; i++) { this.surfaces.set(key(o.x + i, o.y), { y: pos.y + res.top, x: g.cx(o.x + i), z: pos.z, kind: o.kind === 'bench' || o.kind === 'lab' ? 'bench' : 'desk' }); this.occupied.add(key(o.x + i, o.y)); }
           break;
         }
         case 'nurseStation': { const res = P.nurseStation(M, rng); this.addProp(res, new THREE.Vector3(g.cx(o.x), 0, g.cz(o.y)), Math.PI / 2, { nav: true }); this.occupied.add(key(o.x, o.y)); break; }
@@ -234,7 +234,7 @@ export class World {
           const res = this.skin('cart', P.cart(M, rng));
           const pos = this.anchor(o.x, o.y, dir, res.d);
           this.addProp(res, pos, this.yawFacingAway(dir), {});
-          this.surfaces.set(key(o.x, o.y), { y: pos.y + res.top, x: pos.x, z: pos.z });
+          this.surfaces.set(key(o.x, o.y), { y: pos.y + res.top, x: pos.x, z: pos.z, kind: 'cart' });
           this.occupied.add(key(o.x, o.y));
           break;
         }
@@ -242,7 +242,7 @@ export class World {
           const res = P.sideTable(M);
           const pos = this.anchor(o.x, o.y, dir, res.d);
           this.addProp(res, pos, this.yawFacingAway(dir), {});
-          this.surfaces.set(key(o.x, o.y), { y: pos.y + res.top, x: pos.x, z: pos.z });
+          this.surfaces.set(key(o.x, o.y), { y: pos.y + res.top, x: pos.x, z: pos.z, kind: 'nightstand' });
           this.occupied.add(key(o.x, o.y));
           break;
         }
@@ -271,7 +271,24 @@ export class World {
     // itens depois dos moveis (precisam das superficies)
     for (const o of this.L.objects) {
       if (['fuse', 'key', 'battery', 'note'].includes(o.type) && !o.drawer) this._placeItem(o);
-      if (o.type === 'fuse' && o.drawer) this.drawerFuse = o;
+      if (o.type === 'fuse' && o.drawer) this.drawerFuse = { id: o.id, num: o.drawer };
+    }
+    this._addFuseTables();
+  }
+
+  // mesinhas de apoio extras (ver FUSE_TABLES): so movel; o fusivel sorteado pousa em cima delas
+  _addFuseTables() {
+    const M = this.M;
+    for (const [cx, cy] of FUSE_TABLES) {
+      const k = cx + ',' + cy;
+      if (this.surfaces.has(k) || this.occupied.has(k)) continue;
+      const dirs = this.wallDirs(cx, cy);
+      if (!dirs.length) continue;
+      const res = P.sideTable(M);
+      const pos = this.anchor(cx, cy, dirs[0], res.d);
+      this.addProp(res, pos, this.yawFacingAway(dirs[0]), {});
+      this.surfaces.set(k, { y: pos.y + res.top, x: pos.x, z: pos.z, kind: 'table' });
+      this.occupied.add(k);
     }
   }
 
@@ -306,7 +323,7 @@ export class World {
         const res = P.sideTable(M);
         const pos = this.anchor(o.x, o.y, dirs[0], res.d);
         this.addProp(res, pos, this.yawFacingAway(dirs[0]), {});
-        s = { y: pos.y + res.top, x: pos.x, z: pos.z };
+        s = { y: pos.y + res.top, x: pos.x, z: pos.z, kind: 'table' };
       } else {
         s = { y: g.levelBase(o.x, o.y), x: g.cx(o.x) + (this.rng() - 0.5) * 0.4, z: g.cz(o.y) + (this.rng() - 0.5) * 0.4 };
       }
@@ -395,7 +412,8 @@ export class World {
     const r = mulberry32(77);
     for (const d of this.drawers) {
       const k = r();
-      d.content = d.num === 13 ? 'fuse' : k < 0.35 ? 'cadaver' : k < 0.55 ? 'bag' : k < 0.62 ? 'scratches' : 'empty';
+      d.content0 = k < 0.35 ? 'cadaver' : k < 0.55 ? 'bag' : k < 0.62 ? 'scratches' : 'empty';      // o que a gaveta tem quando NAO guarda fusivel
+      d.content = d.num === 13 ? 'fuse' : d.content0;                                                // (padrao: o fusivel 4 na gaveta 13; placeFuses() sorteia outra)
     }
     // gaveta ja aberta e vazia: de onde ele saiu
     const lair = this.drawers.find(d => d.num === 23);
@@ -424,6 +442,7 @@ export class World {
     P.box(g, M.steel, d.w - 0.07, d.h - 0.07, 0.04, 0, 0, 0);
     P.box(g, M.chrome, d.w * 0.4, 0.03, 0.04, 0, -d.h * 0.12, 0.03);
     const tray = new THREE.Group(); tray.position.set(0, -d.h / 2 + 0.06, -1.0); g.add(tray);
+    d.tray = tray;
     P.box(tray, M.steel, d.w - 0.1, 0.03, 1.95, 0, 0, 0);
     if (d.content === 'cadaver' || d.content === 'fuse') {
       const holder = new THREE.Group(); holder.rotation.y = Math.PI; tray.add(holder);
@@ -444,11 +463,56 @@ export class World {
     g.position.set(d.x, d.y, bank.zf);
     this.scene.add(g);
     d.mesh = g;
-    if (d.content === 'fuse' && this.drawerFuse) {
+    if (d.content === 'fuse' && this.drawerFuse && d.num === this.drawerFuse.num) {
       const it = this.spawnItem('fuse', this.drawerFuse.id, new THREE.Vector3(0.05, 0.2, -0.9), tray);
       d.item = it;
     }
     return g;
+  }
+
+  // ---------- fusiveis sorteados ----------
+  // item de fusivel de numero `id` que esta em uso nesta partida (os "sobrando" ficam escondidos e nao contam)
+  fuseItem(id) { return this.items.find(i => i.type === 'fuse' && i.id === id && !i.unused) || null; }
+
+  // tira o fusivel de dentro de uma gaveta (e devolve a gaveta ao conteudo natural)
+  clearDrawerFuse() {
+    for (const d of this.drawers || []) {
+      if (d.item) {
+        const it = d.item;
+        it.mesh.parent?.remove(it.mesh);
+        this.items.splice(this.items.indexOf(it), 1);
+        const ix = this.interactables.findIndex(x => x.item === it); if (ix >= 0) this.interactables.splice(ix, 1);
+        d.item = null;
+      }
+      if (d.content === 'fuse') d.content = d.content0;
+    }
+    this.drawerFuse = null;
+  }
+
+  // Aplica a distribuicao dos fusiveis desta partida: list = [{ id, x, y, z, drawer? }].
+  // Move os fusiveis do cenario para os pontos sorteados, cria os que faltam e coloca um dentro da gaveta sorteada; esconde os que sobram.
+  placeFuses(list) {
+    this.clearDrawerFuse();
+    const used = new Set();
+    for (const a of list) {
+      if (a.drawer != null) {
+        const d = this.drawers.find(x => x.num === a.drawer);
+        if (!d) continue;
+        d.content = 'fuse'; this.drawerFuse = { id: a.id, num: a.drawer };
+        if (d.mesh && d.tray) d.item = this.spawnItem('fuse', a.id, new THREE.Vector3(0.05, 0.2, -0.9), d.tray);     // gaveta ja montada: coloca o fusivel na bandeja
+        continue;
+      }
+      let it = this.items.find(i => i.type === 'fuse' && i.id === a.id && !i.parent && !used.has(i));
+      if (!it) it = this.spawnItem('fuse', a.id, new THREE.Vector3(a.x, a.y, a.z));
+      used.add(it);
+      it.unused = false; it.taken = false; it.mesh.visible = true; it.glint.material.opacity = 0;
+      it.home.set(a.x, a.y, a.z); it.mesh.position.set(a.x, a.y, a.z);
+      it.mesh.rotation.set(0, (a.id * 2.399963) % (Math.PI * 2), 0);
+    }
+    // fusiveis do cenario que nao receberam ponto (o id foi para a gaveta): somem
+    for (const it of this.items) {
+      if (it.type === 'fuse' && !it.parent && !used.has(it)) { it.unused = true; it.taken = true; it.mesh.visible = false; }
+    }
   }
 
   _openDrawerNow(d, instant) {
@@ -728,7 +792,10 @@ export class World {
   // Devolve TODO o estado mutavel do mundo ao inicio da partida: itens, gavetas, portas, esconderijos, luzes.
   // (Usado pelo Hardcore ao morrer e pelas novas rodadas do cooperativo; nao mexe no jogador nem na criatura.)
   resetState() {
-    for (const it of this.items) { it.taken = false; it.mesh.visible = true; it.glint.material.opacity = 0; }
+    for (const it of this.items) {
+      if (it.unused) { it.taken = true; it.mesh.visible = false; continue; }
+      it.taken = false; it.mesh.visible = true; it.glint.material.opacity = 0;
+    }
     if (this.mapItem) { this.mapItem.taken = false; this.mapItem.mesh.visible = true; }
     for (const d of this.drawers || []) {
       d.target = d.open = d.num === 23 ? 1 : 0;      // a gaveta 23 ja nasce aberta (de onde ele saiu)

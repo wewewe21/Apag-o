@@ -74,6 +74,10 @@ Para criar um movimento novo: adicione uma linha em `$clips` no `gerar_animacoes
 - `npm test` roda todos os testes automáticos sem navegador. Créditos de terceiros: [vendor/NOTICE.md](vendor/NOTICE.md).
 - Modos solo: **Normal** (salva ao instalar fusível e mantém os instalados após morrer) e **Hardcore** (morreu, recomeça do zero, sem checkpoints; não apaga o save do Normal).
 
+## Fusíveis sorteados a cada partida
+
+Os fusíveis **mudam de lugar a cada partida** (solo e online): cada um fica numa superfície diferente (mesa, bancada, carrinho, mesinha, cama, maca) ou dentro de uma gaveta do necrotério, nunca dois no mesmo lugar, nunca dois a menos de ~8 m, no máximo um por sala e de 1 a 2 no subsolo. Pontos possíveis e regras: [src/shared/fusespots.js](src/shared/fusespots.js); mesinhas extras: `FUSE_TABLES` em `src/world/layout.js`. O **Livro de Ocorrências** (mesa da Segurança) mostra 3 dos lugares sorteados. No solo o save guarda a semente (continuar mantém os lugares; Hardcore sorteia de novo ao recomeçar). Depois de mudar `layout.js` ou o mundo, rode `npm run build:server` (regera `server/worldspec.json`).
+
 ## Criatura
 
 Movimento, colisao, percepcao e animacao do Noturno: [docs/CRIATURA.md](docs/CRIATURA.md).

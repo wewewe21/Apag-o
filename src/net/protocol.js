@@ -1,5 +1,6 @@
 // Vocabulario comum de cliente e servidor do cooperativo (mensagens sao JSON: { t: 'tipo', ... }).
-export const PROTOCOL_VERSION = 1;
+// v2: fusiveis sorteados por partida (sync.items[].dr) e salas com espectadores. Cliente e servidor de versoes diferentes se recusam com um aviso claro.
+export const PROTOCOL_VERSION = 2;
 
 export const PHASE = { LOBBY: 'lobby', PLAYING: 'playing' };
 

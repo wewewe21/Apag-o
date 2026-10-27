@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import * as CFG from '../src/config.js';
 import { NOISE, PLAYER, FLASHLIGHT as F, HOLD_BREATH, CELL } from '../src/config.js';
 import { COOP, MIMIC, directorFuses } from '../src/shared/coop.js';
+import { pickFuseLayout, fuseItemDef } from '../src/shared/fusespots.js';
 import { CreatureAI } from '../src/entities/creatureAI.js';
 import { Director } from '../src/entities/director.js';
 import { HeadlessCreatureModel } from './headless-model.js';
@@ -114,9 +115,17 @@ export class Match {
     this.audio = this._audioProxy();
     this.fx = { smokeBurst: (p) => this.emit('smoke', [R2(p.x), R2(p.y), R2(p.z)]) };
 
-    // itens
+    // itens. Os FUSIVEIS sao sorteados a cada partida (pontos de spec.fuseSpots + uma gaveta); pilhas e chave sao fixas.
+    this.fuseLayout = null;
+    this.itemDefs = w.itemDefs;
+    if (w.fuseSpots?.length && !opts.fixedFuses) {
+      const rng = opts.fuseRng || Math.random;
+      const ids = Array.from({ length: COOP.fusesTotal }, (_, i) => i + 1);
+      this.fuseLayout = pickFuseLayout(w.fuseSpots, w.drawers.map(d => ({ num: d.num, x: d.x, y: d.y, z: d.z + 0.2 })), ids, rng);
+      this.itemDefs = [...w.itemDefs.filter(d => d.type !== 'fuse'), ...this.fuseLayout.map(fuseItemDef)];
+    }
     this.items = new Map();
-    for (const d of w.itemDefs) this.items.set(d.key, { key: d.key, type: d.type, id: d.id, def: d, drawer: d.drawer ?? null, state: 'world', by: null, pos: { x: d.x, y: d.y, z: d.z } });
+    for (const d of this.itemDefs) this.items.set(d.key, { key: d.key, type: d.type, id: d.id, def: d, drawer: d.drawer ?? null, state: 'world', by: null, pos: { x: d.x, y: d.y, z: d.z } });
     this.drawerOpen = new Map(w.drawers.map(d => [d.num, false]));
     this.meet = { x: w.panel.x, z: w.panel.z - COOP.meeting.forward };
 
@@ -685,7 +694,7 @@ export class Match {
   // estado completo (inicio da partida e reconexao)
   fullSync(p) {
     const items = [];
-    for (const it of this.items.values()) items.push({ key: it.key, st: it.state, by: it.by, x: it.pos.x, y: it.pos.y, z: it.pos.z });
+    for (const it of this.items.values()) items.push({ key: it.key, st: it.state, by: it.by, x: it.pos.x, y: it.pos.y, z: it.pos.z, ...(it.drawer != null ? { dr: it.drawer } : {}) });
     const doors = this.world.doors.map(d => ({ id: d.id, ...d.snapshot() }));
     const spots = this.world.hideSpots.filter(s => s.occupant).map(s => ({ spot: s.id, id: s.occupant.id }));
     return {

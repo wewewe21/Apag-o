@@ -7,6 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import WebSocket from 'ws';
 import { ok, section, T } from './harness.mjs';
+import { PROTOCOL_VERSION } from '../../src/net/protocol.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -23,7 +24,7 @@ const getJson = async (url, headers = {}) => { const r = await fetch(url, { head
 const tryWs = (url, origin) => new Promise((resolve) => {
   const ws = new WebSocket(url, origin ? { headers: { Origin: origin } } : {});
   const done = (v) => { try { ws.terminate(); } catch { /* ok */ } resolve(v); };
-  ws.on('open', () => ws.send(JSON.stringify({ t: 'hello', v: 1, name: 'Teste' })));
+  ws.on('open', () => ws.send(JSON.stringify({ t: 'hello', v: PROTOCOL_VERSION, name: 'Teste' })));
   ws.on('message', (d) => { const m = JSON.parse(d.toString()); if (m.t === 'welcome') done({ ok: true, welcome: m }); });
   ws.on('unexpected-response', (req, res) => done({ ok: false, status: res.statusCode }));
   ws.on('error', () => setTimeout(() => done({ ok: false, status: 'erro' }), 20));
@@ -37,7 +38,7 @@ await section('Producao: PORT, 0.0.0.0, /health, CORS e origem', async () => {
   try {
     ok(new RegExp(`0\\.0\\.0\\.0:${s.port}`).test(s.out) && /producao/.test(s.out), 'escuta em 0.0.0.0 na porta do ambiente (PORT)', s.out.split('\n')[0]);
     const h = await getJson(s.base + '/health');
-    ok(h.status === 200 && h.json.ok === true && h.json.protocol === 1 && h.json.maxRooms === 3, '/health responde 200 sem Origin (health check do provedor)', JSON.stringify(h.json));
+    ok(h.status === 200 && h.json.ok === true && h.json.protocol === PROTOCOL_VERSION && h.json.maxRooms === 3, '/health responde 200 sem Origin (health check do provedor)', JSON.stringify(h.json));
     ok(!h.headers.get('access-control-allow-origin'), '/health sem Origin nao emite cabecalho CORS');
     const okOrigin = await getJson(s.base + '/rooms', { Origin: PAGES });
     ok(okOrigin.status === 200 && okOrigin.headers.get('access-control-allow-origin') === PAGES, 'origem permitida (GitHub Pages) recebe CORS exato');

@@ -123,7 +123,7 @@ await section('Iniciar partida: spawn, 7 fusiveis, estado completo', async () =>
   for (const d of match.world.doors) g.doors.set(g.idx(d.x, d.y), { blocking: () => false, creaturePassable: () => true });
   const reach = g.reachable(g.cellX(start.x), g.cellY(start.z));
   const bad = fuses.filter(f => {
-    const c = match.world.itemDefs.find(i => i.key === f.key);
+    const c = match.itemDefs.find(i => i.key === f.key);
     const spot = match.world.freeSpotNear(c.x, c.z, 0, 1.6, 0.32, true);
     return !spot || !reach[g.idx(g.cellX(spot.x), g.cellY(spot.z))];
   });
@@ -135,7 +135,7 @@ await section('Iniciar partida: spawn, 7 fusiveis, estado completo', async () =>
 
 await section('Fusiveis: coleta simultanea, distancia, posse, duplicacao', async () => {
   const w = match.world;
-  const f1 = w.itemDefs.find(i => i.key === 'fuse:1');
+  const f1 = match.itemDefs.find(i => i.key === 'fuse:1');
   // A e B no mesmo fusivel ao mesmo tempo
   for (const b of [A, B]) { b.pos.x = f1.x + 0.5; b.pos.y = match.grid.floorY(f1.x, f1.z); b.pos.z = f1.z + 0.3; }
   // teleporte proibido: o servidor corrige (fica no spawn)

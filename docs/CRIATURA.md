@@ -38,3 +38,7 @@ Quando ela esta CIENTE (espreita, caca, hesita, ataca, ou esta vendo o jogador) 
 
 Parada (`idle`/`look`, inclusive `hesitate`) ela fica com os bracos RETOS e CAIDOS ao lado do corpo, quase ate os joelhos, e os dedos longos, retos e abertos. Antes o cotovelo ficava dobrado a 84-113 graus com a mao mole para frente (pose de zumbi): `_shapeSkinwalkerArms` (`skinwalker-motion.js`) so podia girar o braco ~26 graus por articulacao. Agora o limite e a forca sobem com `HANG` (1 parada; 0,35 a 0,6 andando/correndo, onde o balanco do clipe continua, so mais reto). Dedos: `skinCurl`/abertura em `guardian-rig.js` para `idle`/`look`. Clipes de acao (`attack`, `roar`, `recoil`, `pain`, `inspect`, `crawl`) nao mudam. Medido no esqueleto real por `tools/test/creature-pose-test.mjs` (esta no `npm test`): cotovelo 11-27 graus parada; mao a 96-99% do braco abaixo do ombro.
 
+
+## Sem dutos (decisao de 2026-10-26)
+
+A criatura **nao entra em dutos**: ela e grande demais para eles e o estado `vent` causava casos estranhos (entrar num duto mesmo com o lugar protegido pela luz). Respiro do diretor e finale a mandam **andando** pelo chao (e pelas escadas, se a porta do subsolo estiver destrancada). Os pontos de duto continuam no mapa so como cenario e como cantos distantes para o respiro. Tambem: se alguem **encosta** nela (alcance do bote) enquanto ela hesita na borda da luz forte, ela ataca; de longe a luz continua protegendo. Testes: `tools/test/creature-server-test.mjs`.

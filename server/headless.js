@@ -68,6 +68,7 @@ export class HeadlessWorld {
     this.exitTrigger = spec.exitTrigger;
     this.panel = spec.panel;
     this.itemDefs = spec.items;
+    this.fuseSpots = spec.fuseSpots || [];          // pontos possiveis dos fusiveis (sorteio a cada partida)
     this.drawers = spec.drawers;
   }
 

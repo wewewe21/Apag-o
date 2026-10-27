@@ -36,7 +36,6 @@ export class OnlineController {
     this.room = null; this.me = null; this.inMatch = false; this.ended = false;
     this.players = new Map();            // id -> { name, status, online }
     this.itemState = new Map();          // key -> { st, by, x, y, z }
-    this.extra = new Map();              // fusiveis 6 e 7 criados so no cooperativo
     this.hp = null; this.creature = null; this.remote = null; this.ghost = null;
     this._sendT = null; this.lastSend = 0; this.notice = null;
     this._wire();
@@ -234,10 +233,15 @@ export class OnlineController {
     this.players = new Map(m.players.map(p => [p.id, { name: p.name, status: p.status, online: p.online, watcher: !!p.watcher }]));
     this.remote.setPlayers(m.players, m.you);
     this.voice?.setPlayers(m.players);
+    // fusiveis: o servidor SORTEIA os lugares a cada partida; o mundo move/cria os fusiveis (e a gaveta) para onde ele mandou
+    const fuseItems = m.items.filter(it => it.key.startsWith('fuse:'));
+    if (fresh) {
+      w.placeFuses(fuseItems.map(it => ({ id: +it.key.slice(5), x: it.x, y: it.y, z: it.z, drawer: it.dr ?? null })));
+      g.setFuseHints(fuseItems.map(it => ({ x: it.x, z: it.z, drawer: it.dr ?? null })));
+    }
     // itens
     for (const it of m.items) {
       this.itemState.set(it.key, { st: it.st, by: it.by, x: it.x, y: it.y, z: it.z });
-      if (it.key.startsWith('fuse:') && it.key !== 'fuse:4' && !this.findItem(it.key)) this._spawnExtra(it);
       const item = this.findItem(it.key);
       if (item) this._applyItem(item, it.st, it.by, it);
     }
@@ -247,7 +251,7 @@ export class OnlineController {
     // gavetas
     for (const d of w.drawers || []) {
       const open = m.drawers.includes(d.num);
-      if (open) { w.drawerMesh(d); d.target = d.open = 1; w._updateDrawer(d, 0); const it = d.item && this.itemState.get('fuse:4'); if (it) this._applyItem(d.item, it.st, it.by, it); }
+      if (open) { w.drawerMesh(d); d.target = d.open = 1; w._updateDrawer(d, 0); const it = d.item && this.itemState.get('fuse:' + d.item.id); if (it) this._applyItem(d.item, it.st, it.by, it); }
     }
     // luzes: lampadas estouradas pela criatura + quadro
     for (const i of m.lamps) { const l = g.lighting.lamps[i]; if (l) l.state = 'dead'; }
@@ -263,17 +267,12 @@ export class OnlineController {
     this._roster();
   }
 
-  _spawnExtra(it) {
-    const w = this.g.world;
-    const item = w.spawnItem('fuse', it.key.split(':')[1] | 0, new THREE.Vector3(it.x, it.y, it.z));
-    this.extra.set(it.key, item);
-    return item;
-  }
-
   findItem(key) {
     const g = this.g, w = g.world;
-    if (this.extra.has(key)) return this.extra.get(key);
-    if (key === 'fuse:4') { const d13 = w.drawers?.find(d => d.num === 13); return d13?.item || null; }
+    if (key.startsWith('fuse:')) {
+      const id = +key.slice(5);
+      return w.fuseItem(id) || null;           // vale tanto o fusivel solto no mapa quanto o da gaveta (se ela ja foi montada)
+    }
     return w.items.find(i => !i.parent && g.itemKey(i) === key) || null;
   }
 
@@ -284,7 +283,7 @@ export class OnlineController {
         const w = this.g.world, mesh = item.mesh;
         if (mesh.parent !== w.scene) { mesh.parent?.remove(mesh); w.scene.add(mesh); item.parent = null; }
         const home = item.home;
-        if (!home || Math.hypot(home.x - pos.x, home.z - pos.z) > 0.05 || Math.abs(home.y - pos.y) > 0.05) { mesh.position.set(pos.x, pos.y, pos.z); mesh.rotation.set(0, Math.random() * 6, 0); }
+        if (!home || Math.hypot(home.x - pos.x, home.z - pos.z) > 0.05 || Math.abs(home.y - pos.y) > 0.05) { mesh.position.set(pos.x, pos.y, pos.z); mesh.rotation.set(0, Math.random() * 6, 0); item.home = new THREE.Vector3(pos.x, pos.y, pos.z); }
       }
     } else { item.taken = true; item.mesh.visible = false; }
   }
@@ -385,7 +384,7 @@ export class OnlineController {
     if (!d) return;
     w.drawerMesh(d); d.target = m.open ? 1 : 0;
     g.audio.drawer(new THREE.Vector3(d.x, d.y, w.drawerBank.zf + 0.3));
-    if (d.item) { const s = this.itemState.get('fuse:4'); if (s) this._applyItem(d.item, s.st, s.by, s); }
+    if (d.item) { const s = this.itemState.get('fuse:' + d.item.id); if (s) this._applyItem(d.item, s.st, s.by, s); }
   }
 
   _hide(m) {

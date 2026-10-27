@@ -27,11 +27,13 @@ export async function startHub(env = {}) {
 }
 
 // cria sala com n jogadores, todos prontos, e inicia a partida
-export async function makeMatch(ctx, n = 3, names = ['Ana', 'Beto', 'Cida', 'Davi']) {
+// matchOpts: por padrao os testes usam os fusiveis nos lugares fixos (deterministico); passe {} para o sorteio de verdade
+export async function makeMatch(ctx, n = 3, names = ['Ana', 'Beto', 'Cida', 'Davi'], matchOpts = { fixedFuses: true }) {
   const bots = [];
   for (let i = 0; i < n; i++) bots.push(await ctx.bot(names[i]));
   bots[0].send({ t: 'create' });
   const rs = await bots[0].next('room'); const code = rs.code;
+  ctx.hub.rooms.get(code).matchOpts = matchOpts;
   for (let i = 1; i < n; i++) { bots[i].send({ t: 'join', code }); await bots[i].next('room'); bots[i].send({ t: 'ready', on: true }); }
   await sleep(80);
   bots[0].send({ t: 'start' });
@@ -47,5 +49,5 @@ export function standNear(match, sp, x, z, r0 = 0, r1 = 1.6) {
   if (!c) throw new Error('sem lugar perto de ' + x.toFixed(1) + ',' + z.toFixed(1));
   sp.pos.set(c.x, c.y, c.z); sp.updateEye(); return c;
 }
-export const item = (match, key) => match.world.itemDefs.find(i => i.key === key);
+export const item = (match, key) => match.itemDefs.find(i => i.key === key);      // posicoes SORTEADAS desta partida (os fusiveis mudam a cada partida)
 export { sleep };

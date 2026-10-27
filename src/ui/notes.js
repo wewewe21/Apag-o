@@ -13,12 +13,13 @@ export const NOTES = {
   vigia: {
     title: 'Livro de Ocorrências — Vigilância',
     meta: 'Posto 2 · noite de 4 para 5 de agosto',
-    body: [
+    // as pistas dos fusiveis mudam a cada partida (o jogo passa 3 dos lugares sorteados; os outros ele "nao anotou")
+    dynamic: (hints) => [
       '02h10 — Gaveta 13 do necrotério aberta por dentro. Maca vazia. Rastro até o corredor norte.',
       '02h40 — Ele passou pela recepção. Não gosta das luzes. Apontei a lanterna na cara dele e ele gritou e recuou. Mas voltou. Sempre volta.',
-      '03h15 — Tirei os cinco fusíveis da porta principal. Se ele sair, não para mais. Espalhei os fusíveis pelo prédio para ninguém recolocar sem pensar:',
-      'um no último quarto à direita da ala dos pacientes; um no carrinho de medicação da enfermaria; um no fundo do arquivo; um na gaveta 13 — ninguém abre a 13; e o último desci para a sala do gerador.',
-      'A chave do subsolo fica aqui na mesa. Ele usa os dutos. Ouça os dutos.',
+      '03h15 — Tirei os fusíveis da porta principal. Se ele sair, não para mais. Espalhei os fusíveis pelo prédio para ninguém recolocar sem pensar. Só anotei alguns lugares:',
+      hints && hints.length ? hints.map(h => '• ' + h).join('<br>') + '<br>Os outros eu nem lembro onde deixei. Procurem em tudo que tem uma superfície: mesas, camas, macas, gavetas.' : 'Deixei em mesas, camas, macas e até nas gavetas do necrotério. Não anotei onde.',
+      'A chave do subsolo fica aqui na mesa. Ele é grande demais para os dutos: ouça os passos, não os dutos.',
     ],
     hand: 'Se você está lendo isto, eu não consegui sair.',
   },

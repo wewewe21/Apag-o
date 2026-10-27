@@ -18,6 +18,7 @@ const steps = [
   ['criatura: colisao, movimento, percepcao, escuta', ['tools/test/creature-server-test.mjs']],
   ['espirito: atravessa paredes, nao sai do predio', ['tools/test/ghost-walls-test.mjs']],
   ['salas: 4 jogam, 10 na sala, espectadores, fila', ['tools/test/rooms-spectators-test.mjs']],
+  ['fusiveis sorteados: distintos, espalhados, todos pegaveis', ['tools/test/fuse-random-test.mjs']],
   ['teclas configuraveis: padroes, troca, conflito, guardar', ['tools/test/keybinds-test.mjs']],
   ['cena de morte: roteiro, camera, reset', ['tools/test/death-scene-test.mjs']],
   ['criatura: bracos retos e caidos parada (esqueleto real)', ['tools/test/creature-pose-test.mjs']],
