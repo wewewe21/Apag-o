@@ -258,17 +258,15 @@ export class Match {
     this.room.send(p, { t: 'corr', x: R3(p.pos.x), y: R3(p.pos.y), z: R3(p.pos.z) });
   }
 
-  // espirito/escapado: anda livre, mas sem sair do predio (paredes valem; portas nao)
+  // espirito/escapado: anda livre e atravessa paredes e moveis, mas nunca sai do predio (barreira externa, ver Grid.ghostMove)
   _ghostState(p, m, dt) {
     const g = this.grid;
     const nx = +m.x, nz = +m.z;
     if (![nx, nz].every(Number.isFinite)) return;
     if (Math.hypot(nx - p.pos.x, nz - p.pos.z) > p.budget * 1.6 + 0.6) { this._correct(p); return; }
     p.budget = Math.max(0, p.budget - Math.hypot(nx - p.pos.x, nz - p.pos.z));
-    const [qx, qz] = g.collideCircle(nx, nz, PLAYER.radius, { ignore: (b) => b.door && b.door.kind !== 'X' });
-    const cx = g.cellX(qx), cy = g.cellY(qz);
-    if (!(g.isFloor(cx, cy) || g.isDoor(cx, cy))) { this._correct(p); return; }
-    p.pos.set(qx, g.floorY(qx, qz), qz);
+    if (!g.ghostWalkable(nx, nz)) { this._correct(p); return; }
+    p.pos.set(nx, g.floorY(nx, nz), nz);
     p.mv = m.mv | 0; p.updateEye();
   }
 

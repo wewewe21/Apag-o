@@ -254,6 +254,7 @@ class Game {
     this.scene.add(this.camera);
     this.ambient = new THREE.HemisphereLight(0x223038, 0x0a0806, 0.35);
     this.scene.add(this.ambient);
+    this.ghostLight = new THREE.PointLight(0xa8c8ff, 0, 18, 1.5); this.scene.add(this.ghostLight);     // so acende para o espirito; existe desde o inicio para nao recompilar shaders
     this.post = new PostFX(r);
     this.post.setSize(innerWidth, innerHeight, q.scale);
     addEventListener('resize', () => {
@@ -889,7 +890,11 @@ class Game {
     this.haunting.update(dt);
     this.paranoia.update(dt);
     u.paranoia.value = this.paranoia.strength;
-    this.ambient.intensity = this.lighting.blackout ? 0.22 : 0.35;
+    // espirito: visao noturna de verdade (ambiente levantado + um brilho frio colado na camera + neblina mais rala) para ler as salas escuras
+    const sp = p.ghost ? 1 : 0;
+    this.ambient.intensity = p.ghost ? 0.8 : this.lighting.blackout ? 0.22 : 0.35;
+    this.ghostLight.intensity = sp * 5; this.ghostLight.position.copy(this.camera.position);
+    this.scene.fog.density = sp ? 0.028 : 0.055;
     this.particles.update(dt, this.time, fl);
     this.audio.update(dt, { zone: this.zoneAtPos(p.pos.x, p.pos.z), fear: this.fear, blackout: this.lighting.blackout, nearExit: this.objectives.doorOpen,
       monsterDist: this.monsterDistance(), heartOn: this.state === 'playing' && !p.dead });

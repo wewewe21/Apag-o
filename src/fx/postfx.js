@@ -64,10 +64,13 @@ void main(){
     float top = smoothstep(0.62, 0.52, vUv.y);
     col *= mix(0.05, 1.0, top);
   }
-  // espirito: mundo desbotado, azulado e um pouco mais claro (enxerga melhor que os vivos)
+  // espirito: VISAO NOTURNA. A curva levanta as sombras (da pra ver as salas escuras) sem estourar o que ja tem luz;
+  // o tom e um azul frio, pouco saturado e escuro, bem mais limpo que o antigo azul chapado.
   if (ghost > 0.001) {
     float gl = dot(col, vec3(0.299, 0.587, 0.114));
-    col = mix(col, vec3(gl) * vec3(0.72, 0.9, 1.12) * 2.6 + vec3(0.012, 0.022, 0.034), ghost * 0.78);
+    float nv = pow(clamp(gl, 0.0, 1.0), 0.5) * 0.4;
+    vec3 night = vec3(nv) * vec3(0.42, 0.7, 1.0) + vec3(0.002, 0.006, 0.014) + col * 0.08;
+    col = mix(col, night, ghost * 0.94);
   }
   // clarao do foco queimando
   col += vec3(1.0, 0.95, 0.85) * burn * 0.25 * smoothstep(0.5, 0.0, r);
@@ -81,7 +84,7 @@ void main(){
   // granulacao
   float n = hash(vUv * res + fract(time * 13.0) * 100.0);
   col += (n - 0.5) * grain * (0.6 + fear);
-  col *= 1.0 - blackout;
+  col *= 1.0 - blackout * (1.0 - ghost * 0.85);      // o espirito enxerga mesmo no apagao
   col = mix(col, fadeColor, fade);
   gl_FragColor = linearToOutputTexel(vec4(max(col, 0.0), 1.0));
 }`;

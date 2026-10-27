@@ -7,6 +7,11 @@ import { footstepSurfaceAt } from '../core/footsteps.js';
 
 const COLORS = [0x8fa3b8, 0xb8a58f, 0x9bb88f, 0xb88f9b];   // uma cor de camisola por jogador
 const SPOT_POOL = 3;
+// silhueta de quem esta atras de uma parede, vista pelo espirito: fria, translucida, sem escrever profundidade
+const XRAY_MAT = new THREE.MeshBasicMaterial({
+  color: 0x7fb4ff, transparent: true, opacity: 0.2, depthTest: true, depthFunc: THREE.GreaterDepth, depthWrite: false, toneMapped: false,
+  polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+});
 
 function nameTexture(name) {
   const c = document.createElement('canvas'); c.width = 256; c.height = 64;
@@ -47,8 +52,27 @@ class Avatar {
   }
   setSpectator(on) {
     this.spectator = on;
-    for (const m of this.mats) { m.transparent = on; m.opacity = on ? 0.35 : 1; m.emissive = new THREE.Color(on ? 0x223a55 : 0x000000); }
+    this._look();
     this.tag.material.opacity = on ? 0.6 : 1;
+  }
+  _look() {
+    const on = this.spectator, nv = this.xrayOn;
+    for (const m of this.mats) { m.transparent = on; m.opacity = on ? 0.35 : 1; m.emissive = new THREE.Color(on ? 0x223a55 : nv ? 0x1b2c3e : 0x000000); }
+  }
+  // Visao de espirito: alem do avatar normal (visivel com linha de visao), uma silhueta fraca que so aparece ATRAS de paredes e
+  // objetos (GreaterDepth: passa so onde o avatar esta tapado). Assim "vejo direto" e "vejo atraves da parede" ficam bem diferentes.
+  setXray(on) {
+    if (on && !this.xray) {
+      const src = []; this.group.traverse(o => { if (o.isMesh) src.push(o); });
+      this.xray = src.map(o => {
+        const x = new THREE.Mesh(o.geometry, XRAY_MAT);
+        x.userData.xray = true; x.renderOrder = 6; x.position.copy(o.position); x.rotation.copy(o.rotation); x.scale.copy(o.scale);
+        o.parent.add(x); return x;
+      });
+    }
+    this.xrayOn = on; this._look();
+    if (this.xray) for (const x of this.xray) x.visible = on;
+    this.tag.material.depthTest = !on;            // o nome tambem aparece atras da parede
   }
   push(t, s) { this.buf.push({ t, ...s }); if (this.buf.length > 12) this.buf.shift(); }
   // amostra no instante `rt` (segundos, mesmo relogio de push) com interpolacao entre os dois estados vizinhos
@@ -81,7 +105,10 @@ export class RemotePlayers {
     }
     this.now = 0;
     this.meta = new Map();        // id -> { name, colorIdx }
+    this.xray = false;            // true enquanto EU sou espirito
   }
+
+  setXray(on) { this.xray = !!on; for (const a of this.avatars.values()) a.setXray(this.xray); }
 
   setPlayers(list, meId) {
     this.meId = meId;
@@ -95,6 +122,7 @@ export class RemotePlayers {
       const m = this.meta.get(id) || { name: '?', color: COLORS[0] };
       a = new Avatar(id, m.name, m.color, spectator);
       this.root.add(a.group); this.avatars.set(id, a);
+      if (this.xray) a.setXray(true);
     }
     return a;
   }
@@ -149,9 +177,10 @@ export class RemotePlayers {
       a.lastFoot = { x: st.x, z: st.z };
       // nome: some com a distancia
       const d = Math.hypot(st.x - cam.x, st.z - cam.z);
-      a.tag.visible = !a.spectator && d < 14 && !offline;
-      a.tag.material.opacity = clamp(1.4 - d / 10, 0, 1);
-      a.group.traverse(o => { if (o.isMesh) o.visible = !offline || Math.floor(nowSec * 3) % 2 === 0; });   // pisca se estiver sem conexao
+      a.tag.visible = !a.spectator && d < (a.xrayOn ? 30 : 14) && !offline;
+      a.tag.material.opacity = clamp(1.4 - d / (a.xrayOn ? 22 : 10), 0, 1);
+      const blink = !offline || Math.floor(nowSec * 3) % 2 === 0;
+      a.group.traverse(o => { if (o.isMesh) o.visible = o.userData.xray ? (blink && a.xrayOn) : blink; });   // pisca se estiver sem conexao
       // lanterna
       const fl = !!(st.flags & FLAG.FLASH) && !hidden && !a.spectator;
       if (fl && spotIdx < SPOT_POOL) {

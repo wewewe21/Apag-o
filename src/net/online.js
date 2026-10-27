@@ -176,7 +176,7 @@ export class OnlineController {
     // mundo como no inicio da partida: nada instalado, itens no lugar, luzes de fabrica
     g.world.resetState(); g.objectives.reset(); g.particles.reset(); g.creatureFx.clear(); g.audio.stopSiren();
     g.haunting.reset(); g.paranoia.reset();
-    this.creature.reset(); this.remote.clear(); this.ghost.hide();
+    this.creature.reset(); this.remote.clear(); this.remote.setXray(false); this.ghost.hide();
     const p = g.player, fl = g.flashlight;
     p.inventory = { fuses: [], key: false, map: false }; p.spawn(m.pose.x, m.pose.z, m.pose.yaw); p.dead = false; p.lookLock = null;
     g.deathScene?.reset();
@@ -444,7 +444,7 @@ export class OnlineController {
     $('roster').hidden = true; $('voicebar').hidden = true; g.hud.show(false);
     g.player.ghost = false; g.post.uniforms.ghost.value = 0; g.post.uniforms.fade.value = 1; g.post.uniforms.fadeColor.value.setRGB(0, 0, 0);
     g.state = 'lobby'; this.voice?.onMatchEnd?.();
-    this.remote?.clear(); this.creature?.reset(); g.creatureFx.clear();
+    this.remote?.clear(); this.remote?.setXray(false); this.creature?.reset(); g.creatureFx.clear();
     this.ui.showLobby(true); if (this.room) this.ui.lobby(this.room, this.me);
     this.net.send({ t: 'rooms' });
   }
@@ -457,6 +457,7 @@ export class OnlineController {
     this.spectating = true;
     this.voice?.setStatus(this.me, kind === 'escaped' ? 'escaped' : 'dead');
     p.ghost = true; p.dead = false; p.lookLock = null; p.hidden = null; p.holdingBreath = false;
+    this.remote?.setXray(true);                // visao noturna: ve os outros atraves das paredes (silhueta fraca)
     g.deathScene?.reset();
     g.flashlight.on = false; g.creatureFx.clear();
     const u = g.post.uniforms; u.ghost.value = 1; u.fade.value = 0; u.pulse.value = 0; u.hideMask.value = 0; u.adapt.value = 0;

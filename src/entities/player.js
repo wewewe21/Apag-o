@@ -116,7 +116,7 @@ export class Player {
     this._applyCamera(dt, speedNow);
   }
 
-  // espirito: anda sem ruido nem estamina, portas nao o bloqueiam (as paredes sim: nunca sai do predio)
+  // espirito: anda sem ruido nem estamina e atravessa paredes, portas e moveis (so a barreira externa do predio o segura)
   _updateGhost(dt, input) {
     const g = this.game.grid;
     const f = (input.down('KeyW') || input.down('ArrowUp') ? 1 : 0) - (input.down('KeyS') || input.down('ArrowDown') ? 1 : 0);
@@ -126,10 +126,8 @@ export class Player {
     const sin = Math.sin(this.yaw), cos = Math.cos(this.yaw);
     this.vel.x = damp(this.vel.x, (-sin * f + cos * s) / len * speed * (moving ? 1 : 0), 8, dt);
     this.vel.y = damp(this.vel.y, (-cos * f - sin * s) / len * speed * (moving ? 1 : 0), 8, dt);
-    let nx = this.pos.x + this.vel.x * dt, nz = this.pos.z + this.vel.y * dt;
-    [nx, nz] = g.collideCircle(nx, nz, PLAYER.radius, { ignore: (b) => b.door && b.door.kind !== 'X' });
-    const cx = g.cellX(nx), cy = g.cellY(nz);
-    if (g.isFloor(cx, cy) || g.isDoor(cx, cy)) { this.pos.x = nx; this.pos.z = nz; }      // nunca fora do piso valido do predio
+    // atravessa paredes e moveis; so a barreira externa do predio o segura (mesma regra do servidor)
+    [this.pos.x, this.pos.z] = g.ghostMove(this.pos.x, this.pos.z, this.pos.x + this.vel.x * dt, this.pos.z + this.vel.y * dt);
     const fy = g.floorY(this.pos.x, this.pos.z);
     this.pos.y = Math.abs(fy - this.pos.y) > 1 ? fy : damp(this.pos.y, fy, 10, dt);
     this.moving = moving; this.sprinting = false;

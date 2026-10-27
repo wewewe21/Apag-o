@@ -55,6 +55,25 @@ export class Grid {
 
   isBoundaryWall(x, y) { return this.inb(x, y) && this.boundary[this.idx(x, y)] === 1; }
 
+  // ---------- espirito: atravessa paredes internas, nunca sai do predio ----------
+  // Vale piso, porta e celula de parede com piso/porta dos DOIS lados (parede que separa dois comodos).
+  // Parede externa (so um lado com piso) e a massa de parede por tras dela continuam barreira.
+  _ghostCell(x, y) {
+    if (!this.inb(x, y)) return false;
+    if (this.isFloor(x, y) || this.isDoor(x, y)) return true;
+    if (!this.isWallish(x, y)) return false;
+    const open = (a, b) => this.isFloor(a, b) || this.isDoor(a, b);
+    return (open(x - 1, y) && open(x + 1, y)) || (open(x, y - 1) && open(x, y + 1));
+  }
+  ghostWalkable(wx, wz) { return this._ghostCell(this.cellX(wx), this.cellY(wz)); }
+  // move de (px,pz) para (nx,nz) sem colisao com paredes/moveis, deslizando pela barreira do mapa (client e servidor usam a mesma regra)
+  ghostMove(px, pz, nx, nz) {
+    if (this.ghostWalkable(nx, nz)) return [nx, nz];
+    if (this.ghostWalkable(nx, pz)) return [nx, pz];
+    if (this.ghostWalkable(px, nz)) return [px, nz];
+    return [px, pz];
+  }
+
   // ha "braco" de parede ligando (x,y) ao vizinho?
   arm(x, y, dx, dy) {
     return this.isBoundaryWall(x, y) && this.isBoundaryWall(x + dx, y + dy);
