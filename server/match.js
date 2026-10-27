@@ -57,6 +57,9 @@ export class ServerPlayer {
     this.ghostT = 0; this.diedAt = null;
     this.corrections = 0; this.rate = { t: 0, n: 0 };
     this.view = null;
+    this.role = 'player';                   // player | spectator (so assiste; vira jogador pela fila na proxima rodada)
+    this.watcher = false;                   // true enquanto esta partida o trata como espectador (nunca jogou esta rodada)
+    this.queueN = 0;                        // ordem de chegada na sala: define a fila dos espectadores
   }
   get alive() { return this.status === 'alive'; }
   get connected() { return !!this.conn; }
@@ -150,6 +153,15 @@ export class Match {
   }
 
   spawnPose(p) { return { x: R3(p.pos.x), y: R3(p.pos.y), z: R3(p.pos.z), yaw: p.yaw }; }
+
+  // Espectador: entra na partida (no inicio ou com ela em andamento) ja como ESPIRITO. Nao conta como jogador (nao pode pegar
+  // nada, a criatura o ignora, nao assombra os vivos) e fala so com outros espiritos. Na proxima rodada a fila decide quem joga.
+  addWatcher(p) {
+    const had = this.players.has(p.id);              // quem saiu e voltou na mesma partida: continua registrado, mas agora como espectador
+    this._spawn(p, this.players.size);
+    p.watcher = true; p.status = 'dead'; p.diedAt = this.time; p.ghostT = Infinity; p.dying = false;
+    if (!had) { this.players.set(p.id, p); p.view = new PlayerView(p); this.views.push(p.view); }
+  }
 
   // ---------------- host da IA da criatura ----------------
   _audioProxy() {
@@ -510,7 +522,7 @@ export class Match {
   end(result) {
     if (this.phase === 'ended') return;
     this.phase = 'ended'; this.result = result;
-    const stats = { time: Math.round(this.time), deaths: this.stats.deaths, repels: this.stats.repels, escaped: [...this.players.values()].filter(q => q.status === 'escaped').length, players: this.players.size, fuses: this.installed.length };
+    const stats = { time: Math.round(this.time), deaths: this.stats.deaths, repels: this.stats.repels, escaped: [...this.players.values()].filter(q => q.status === 'escaped').length, players: [...this.players.values()].filter(q => !q.watcher).length, fuses: this.installed.length };
     this.room.onEnd(result, stats);
   }
 
@@ -548,7 +560,7 @@ export class Match {
       if (d.sent !== this._doorKey(d)) this._sendDoor(d, { by: 'creature' });
     }
     // espiritos
-    for (const p of this.players.values()) if (p.status === 'dead') this._tickGhost(p, dt);
+    for (const p of this.players.values()) if (p.status === 'dead' && !p.watcher) this._tickGhost(p, dt);
 
     if (this.tickN % COOP.snapshotEvery === 0) this._broadcastSnapshots();
   }
@@ -682,7 +694,7 @@ export class Match {
       pose: this.spawnPose(p), items, doors, spots, installed: this.installed.slice(), exitOpen: this.exitOpen, total: COOP.fusesTotal,
       lamps: this.lighting.dead(), power: this.installed.length, blackout: this.lighting.blackout,
       drawers: [...this.drawerOpen].filter(([, o]) => o).map(([n]) => n),
-      players: [...this.players.values()].map(q => ({ id: q.id, name: q.name, status: q.status, online: q.connected })),
+      players: [...this.players.values()].map(q => ({ id: q.id, name: q.name, status: q.status, online: q.connected, watcher: q.watcher })),
       carry: [...p.carry], hasKey: p.hasKey,
     };
   }

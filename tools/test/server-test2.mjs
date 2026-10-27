@@ -203,13 +203,16 @@ await section('Gather ignora mortos', async () => {
 
 await section('Entrada tardia, reconexao e reinicio do servidor', async () => {
   const { bots: [A, B], match, room, code } = await makeMatch(ctx, 2);
-  const E = await ctx.bot('Eva'); E.send({ t: 'join', code }); const e = await E.next('err');
-  ok(e.code === 'room_started', 'ninguem entra numa partida em andamento (nao ha vida extra por entrada)');
+  const E = await ctx.bot('Eva'); E.send({ t: 'join', code });
+  const eStart = await E.next('start'), eSync = await E.next('sync');
+  ok(eSync.status === 'dead' && eSync.players.find(q => q.id === E.id)?.watcher === true, 'quem entra numa partida em andamento vira espectador (espirito), nunca ganha vida nova');
+  ok(match.players.get(E.id).watcher && match.aliveList().length === 2 && eStart.players.length === 3, 'o espectador nao conta como jogador vivo');
   const F = await ctx.bot('Fulano', { token: 'token-de-sessao-antiga-que-o-servidor-nao-conhece' });
   ok(F.welcome.expired === true && F.welcome.resumed === false, 'token desconhecido (servidor reiniciou): cliente e avisado com expired=true');
-  // A sai da sala e tenta voltar depois: nao entra
+  // A sai da sala e volta depois: entra de novo, mas so como espectador
   A.send({ t: 'leave' }); await A.next('left_room');
-  A.send({ t: 'join', code }); const e2 = await A.next('err'); ok(e2.code === 'room_started', 'quem saiu nao volta a uma partida em andamento');
+  A.drop((m) => m.t === 'room'); A.send({ t: 'join', code }); const rA = await A.next('room');
+  ok(rA.members.find(m => m.id === A.id)?.role === 'spectator', 'quem saiu e volta durante a partida entra como espectador');
 });
 
 await section('Movimento: velocidade aceita e velocidade absurda', async () => {

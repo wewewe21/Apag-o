@@ -168,6 +168,11 @@
   #lbMembers .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--faint); }
   #lbMembers .dot.ready { background: var(--green); box-shadow: 0 0 8px rgba(111,208,138,.6); }
   #lbMembers .dot.off { background: transparent; border: 1px solid var(--faint); }
+  #lbMembers .dot.spec { background: #6f9fd8; opacity: .7; }
+  .rolebanner { margin: 10px 0; padding: 10px 14px; border: 1px solid #6f9fd8; color: #b9d2ff; background: rgba(40,70,110,.18); font: 500 15px/1.45 var(--ui); letter-spacing: .03em; }
+  .rolebanner.ok { border-color: var(--green); color: var(--green); background: rgba(40,110,60,.12); }
+  .rolebanner b { color: #e6f0ff; }
+  .rolebanner.ok b { color: #c8f0d2; }
   #lbMembers .tag { color: var(--dim); font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; }
   .roomcode { font: 400 64px/1 var(--display); letter-spacing: 0.18em; text-align: center; color: var(--bone); user-select: text; }
   #netBanner { position: fixed; left: 50%; top: 10px; transform: translateX(-50%); z-index: 40; background: rgba(9,12,11,.92); border: 1px solid var(--amber); color: var(--amber); padding: 8px 16px; font: 500 16px var(--ui); letter-spacing: .06em; max-width: min(720px, 92vw); text-align: center; }
@@ -178,7 +183,10 @@
   #roster .me { color: var(--bone); }
   #roster .dead { text-decoration: line-through; opacity: .55; }
   #roster .off { opacity: .55; font-style: italic; }
-  #roster .talk::before { content: "\25CF "; color: var(--green); }
+  #roster div { position: relative; padding-left: 20px; }
+  #roster .watch { opacity: .65; font-style: italic; }
+  #roster .talk { color: var(--green); }
+  #roster .talk::before { content: ""; position: absolute; left: 0; top: 4px; width: 15px; height: 15px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%236fd08a' d='M2 6h3l4-3v10L5 10H2z'/%3E%3Cpath fill='none' stroke='%236fd08a' stroke-width='1.4' stroke-linecap='round' d='M11 5.5a3.5 3.5 0 010 5M13 3.5a6.5 6.5 0 010 9'/%3E%3C/svg%3E") center/contain no-repeat; }
   #spectate { position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%); text-align: center; font: 500 17px var(--ui); letter-spacing: .14em; text-transform: uppercase; color: #9fc3d8; text-shadow: 0 1px 4px #000; }
   #voicebar { position: absolute; right: 26px; top: 20px; display: flex; gap: 8px; align-items: center; pointer-events: auto; font: 500 14px var(--ui); letter-spacing: .1em; color: var(--dim); }
   #voicebar button { padding: 4px 10px; font-size: 13px; }
@@ -294,7 +302,7 @@
 <section id="online" class="screen overlay" hidden>
   <div class="menu wide">
     <h2>Online</h2>
-    <div class="sub2">Cooperativo · até 4 jogadores · uma vida cada · 7 fusíveis</div>
+    <div class="sub2">Cooperativo · 4 jogadores + até 6 espectadores · uma vida cada · 7 fusíveis</div>
     <label class="field" for="onName">Seu nome <input id="onName" type="text" maxlength="16" autocomplete="off" spellcheck="false"></label>
     <div id="onStatus" class="status" role="status"></div>
     <div class="actions"><button id="onCreate" class="primary">Criar sala</button></div>
@@ -310,6 +318,7 @@
     <div class="roomcode" id="lbCode" title="Passe este código para os amigos">----</div>
     <div class="sub2" id="lbSub"></div>
     <ul id="lbMembers"></ul>
+    <div id="lbRole" class="rolebanner" hidden role="status"></div>
     <div id="lbStatus" class="status" role="status"></div>
     <div id="mmBox" class="mimicbox" hidden>
       <div class="vp-title">Eco de voz (opcional)</div>

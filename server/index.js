@@ -170,6 +170,7 @@ export class Hub {
 
   _dispatch(conn, p, m) {
     const room = p.room, match = room?.match;
+    if (!p.conn) p.conn = conn;           // quem saiu de uma partida (removePlayer zera conn) precisa receber de novo ao entrar noutra sala
     switch (m.t) {
       case 'name': { p.name = cleanName(m.name, p.name); room?.pushState(); break; }
       case 'rooms': conn.send({ t: 'rooms', rooms: this.listRooms() }); break;
@@ -186,12 +187,8 @@ export class Hub {
         const r = this.rooms.get(cleanCode(m.code));
         if (!r) return this._err(conn, ERR.NO_ROOM, 'Sala nao encontrada.');
         const e = r.join(p);
-        if (e === ERR.ROOM_FULL) return this._err(conn, e, 'Sala cheia (4/4).');
-        if (e === ERR.ROOM_STARTED) return this._err(conn, e, 'A partida ja comecou.');
+        if (e === ERR.ROOM_FULL) return this._err(conn, e, 'Sala cheia (' + COOP.maxMembers + '/' + COOP.maxMembers + ').');
         p.room = r;
-        // nome repetido na sala: acrescenta numero
-        const dup = [...r.members.values()].filter(q => q !== p && q.name === p.name).length;
-        if (dup) { p.name = cleanName(p.name + ' ' + (dup + 1), p.name); r.pushState(); }
         break;
       }
       case 'leave': if (room) { room.leave(p); conn.send({ t: 'left_room' }); } break;

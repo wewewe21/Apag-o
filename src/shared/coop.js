@@ -3,8 +3,9 @@
 import { CELL } from '../config.js';
 
 export const COOP = {
-  maxPlayers: 4,
-  fusesTotal: 7,                    // fusiveis coletaveis no mapa (ids 1..7)
+  maxPlayers: 4,                    // quem JOGA (vivo na partida)
+  maxMembers: 10,                   // total na sala: os 6 alem dos 4 jogadores so entram como espectador (espirito)
+  fusesTotal: 7,                   // fusiveis coletaveis no mapa (ids 1..7)
   soloFusesTotal: 5,                // usado para escalar a agressividade do diretor (mesma curva do solo)
   spawnSpacing: 0.9,                // m entre jogadores na largada (raio do jogador = 0,32)
   meeting: { forward: 1.9, radius: 2.6 },   // area de reuniao: m a frente do quadro e raio

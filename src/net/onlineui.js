@@ -10,9 +10,9 @@ export class OnlineUI {
     const nm = $('onName');
     try { nm.value = localStorage.getItem(NAME_KEY) || ''; } catch { /* sem storage */ }
     $('onCreate').onclick = () => h.create(this.name());
-    $('onJoin').onclick = () => h.join($('onCode').value, this.name());
+    $('onJoin').onclick = () => this._join($('onCode').value);
     $('onCode').addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g, ''); });
-    $('onCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') h.join($('onCode').value, this.name()); });
+    $('onCode').addEventListener('keydown', (e) => { if (e.key === 'Enter') this._join($('onCode').value); });
     $('onRefresh').onclick = () => h.refresh();
     $('onBack').onclick = () => h.back();
     $('lbReady').onclick = () => h.ready(!this.myReady);
@@ -21,6 +21,15 @@ export class OnlineUI {
     $('endBack').onclick = () => h.endBack();
     this.myReady = false;
   }
+
+  // Antes de entrar numa sala em que so da para assistir (partida em andamento ou 4 jogadores ja), avisa e pede confirmacao.
+  _join(code) {
+    code = String(code || '').toUpperCase();
+    const r = (this._rooms || []).find(x => x.code === code);
+    if (r && this.watchOnly(r) && !confirm(`A sala ${r.code} está ${r.phase === 'lobby' ? 'com os 4 lugares de jogador ocupados' : 'em partida'}.\n\nVocê entra como ESPECTADOR (espírito): vê a partida, mas não joga agora. Quando terminar a rodada, se sobrar vaga, o primeiro da fila vira jogador.\n\nEntrar mesmo assim?`)) return;
+    this.h.join(code, this.name());
+  }
+  watchOnly(r) { return r.phase !== 'lobby' || (r.players ?? r.count) >= (r.maxPlayers ?? r.max); }
 
   name() {
     const n = $('onName').value.trim().slice(0, 16);
@@ -38,14 +47,16 @@ export class OnlineUI {
   enableMenu(on) { for (const id of ['onCreate', 'onJoin', 'onRefresh']) $(id).disabled = !on; }
 
   rooms(list) {
+    this._rooms = list;
     const ul = $('onRooms');
     if (!list.length) { ul.innerHTML = '<li class="empty">Nenhuma sala aberta agora. Crie uma!</li>'; return; }
     ul.innerHTML = list.map(r => {
-      const joinable = r.phase === 'lobby' && r.count < r.max;
-      const st = r.phase === 'lobby' ? (r.count >= r.max ? 'cheia' : 'aguardando') : 'em partida';
-      return `<li><span class="code">${esc(r.code)}</span><span>${esc(r.name)} <span style="color:var(--dim)">· ${esc(r.host)}</span></span><span>${r.count}/${r.max} · ${st}</span><button data-code="${esc(r.code)}" ${joinable ? '' : 'disabled'}>Entrar</button></li>`;
+      const joinable = r.count < r.max, watch = this.watchOnly(r);
+      const st = r.count >= r.max ? 'cheia' : r.phase === 'lobby' ? 'aguardando' : 'em partida';
+      const who = r.players != null ? `${r.players}/${r.maxPlayers} jogam${r.spectators ? ` · ${r.spectators} assistindo` : ''}` : `${r.count}/${r.max}`;
+      return `<li><span class="code">${esc(r.code)}</span><span>${esc(r.name)} <span style="color:var(--dim)">· ${esc(r.host)}</span></span><span>${who} · ${st}</span><button data-code="${esc(r.code)}" ${joinable ? '' : 'disabled'}>${watch ? 'Assistir' : 'Entrar'}</button></li>`;
     }).join('');
-    ul.querySelectorAll('button[data-code]').forEach(b => { b.onclick = () => this.h.join(b.dataset.code, this.name()); });
+    ul.querySelectorAll('button[data-code]').forEach(b => { b.onclick = () => this._join(b.dataset.code); });
   }
 
   lobby(room, meId) {
@@ -53,16 +64,28 @@ export class OnlineUI {
     $('lbCode').textContent = room.code;
     const isHost = room.host === meId;
     const me = room.members.find(m => m.id === meId);
+    const spectator = me?.role === 'spectator';
     this.myReady = !!me?.ready;
-    $('lbSub').textContent = `${room.members.length}/${room.max} jogadores · ${isHost ? 'você é o criador da sala' : 'aguardando o criador iniciar'}`;
+    const players = room.members.filter(m => m.role !== 'spectator'), watchers = room.members.filter(m => m.role === 'spectator');
+    $('lbSub').textContent = `${players.length}/${room.maxPlayers ?? 4} jogadores${watchers.length ? ` · ${watchers.length} espectador${watchers.length > 1 ? 'es' : ''}` : ''} · ${isHost ? 'você é o criador da sala' : 'aguardando o criador iniciar'}`;
     $('lbMembers').innerHTML = room.members.map(m => {
-      const tag = m.id === room.host ? 'criador' : m.online ? (m.ready ? 'pronto' : 'aguardando') : 'sem conexão';
-      return `<li><span class="dot ${m.online ? (m.ready || m.id === room.host ? 'ready' : '') : 'off'}"></span><span>${esc(m.name)}${m.id === meId ? ' <span style="color:var(--dim)">(você)</span>' : ''}</span><span class="tag">${tag}</span></li>`;
+      const tag = m.role === 'spectator' ? `espectador · fila ${m.q}` : m.id === room.host ? 'criador' : m.online ? (m.ready ? 'pronto' : 'aguardando') : 'sem conexão';
+      const dot = m.role === 'spectator' ? 'spec' : m.online ? (m.ready || m.id === room.host ? 'ready' : '') : 'off';
+      return `<li><span class="dot ${dot}"></span><span>${esc(m.name)}${m.id === meId ? ' <span style="color:var(--dim)">(você)</span>' : ''}</span><span class="tag">${tag}</span></li>`;
     }).join('');
-    $('lbReady').hidden = isHost;
+    // aviso claro para quem so vai assistir (para ninguem iniciar a partida achando que vai jogar)
+    const rb = $('lbRole');
+    if (spectator) {
+      rb.hidden = false; rb.className = 'rolebanner';
+      rb.innerHTML = room.phase === 'playing'
+        ? `<b>Partida em andamento.</b> Você vai entrar como <b>ESPECTADOR (espírito)</b>: vê tudo, atravessa paredes, mas <b>não joga agora</b>. Você é o nº ${me.q} da fila para a próxima rodada. Não quer só assistir? Clique em <b>Sair da sala</b>.`
+        : `<b>Você é ESPECTADOR</b> (nº ${me.q} da fila): os ${room.maxPlayers ?? 4} lugares de jogador estão ocupados. Nesta rodada você <b>só assiste, como espírito</b>. Se alguém sair, o primeiro da fila assume a vaga. Não quer só assistir? Clique em <b>Sair da sala</b>.`;
+    } else if (me?.role === 'player') { rb.hidden = false; rb.className = 'rolebanner ok'; rb.innerHTML = '<b>Você é JOGADOR</b> nesta rodada.'; }
+    else rb.hidden = true;
+    $('lbReady').hidden = isHost || spectator;
     $('lbReady').textContent = this.myReady ? 'Não estou pronto' : 'Estou pronto';
     $('lbStart').hidden = !isHost;
-    const waiting = room.members.filter(m => m.id !== room.host && m.online && !m.ready).length;
+    const waiting = room.members.filter(m => m.role !== 'spectator' && m.id !== room.host && m.online && !m.ready).length;
     $('lbStart').disabled = false;
     $('lbStart').textContent = waiting ? `Iniciar (${waiting} ainda não pronto${waiting > 1 ? 's' : ''})` : 'Iniciar partida';
     if (room.result) {
@@ -82,7 +105,7 @@ export class OnlineUI {
     $('endStats').querySelectorAll('dt').forEach(e => { e.style.cssText = 'font:500 13px var(--ui);letter-spacing:.2em;text-transform:uppercase;opacity:.7'; });
     $('endStats').querySelectorAll('dd').forEach(e => { e.style.cssText = 'margin:6px 0 0;font:400 30px var(--display)'; });
     const label = { escaped: 'escapou', dead: 'morreu', alive: 'vivo', left: 'saiu' };
-    $('endPlayers').innerHTML = players.map(p => `<li>${esc(p.name)}${p.id === meId ? ' (você)' : ''} — ${label[p.status] || p.status}</li>`).join('');
+    $('endPlayers').innerHTML = players.filter(p => !p.watcher).map(p => `<li>${esc(p.name)}${p.id === meId ? ' (você)' : ''} — ${label[p.status] || p.status}</li>`).join('');
     $('endScreen').hidden = false;
   }
   hideEnd() { $('endScreen').hidden = true; }

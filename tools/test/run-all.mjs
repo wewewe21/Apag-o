@@ -17,6 +17,7 @@ const steps = [
   ['servidor: eco de voz (opt-in, limites, descarte)', ['tools/test/mimic-server-test.mjs']],
   ['criatura: colisao, movimento, percepcao, escuta', ['tools/test/creature-server-test.mjs']],
   ['espirito: atravessa paredes, nao sai do predio', ['tools/test/ghost-walls-test.mjs']],
+  ['salas: 4 jogam, 10 na sala, espectadores, fila', ['tools/test/rooms-spectators-test.mjs']],
   ['cena de morte: roteiro, camera, reset', ['tools/test/death-scene-test.mjs']],
   ['criatura: bracos retos e caidos parada (esqueleto real)', ['tools/test/creature-pose-test.mjs']],
   ['modelos 3D: normalizacao, mundo identico, process.py, executor Tripo (servidor falso)', ['tools/test/models-test.mjs']],

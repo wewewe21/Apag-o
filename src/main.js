@@ -776,7 +776,7 @@ class Game {
     $('btnNoteClose').onclick = () => this.closeNote();
     $('btnMapClose').onclick = () => this.closeMap();
     $('btnAgain').onclick = () => { if (this.mode === 'normal') clearSave(); location.reload(); };
-    $('btnQuit').onclick = () => { this.online?.leaveRoom(); location.reload(); };
+    $('btnQuit').onclick = () => { if (this.online && !this.online.confirmLeave()) return; this.online?.leaveRoom(); location.reload(); };
     const sens = $('optSens'), vol = $('optVol'), qual = $('optQuality'), inv = $('optInvert');
     sens.value = this.prefs.sens; vol.value = this.prefs.volume; qual.value = this.prefs.quality; inv.checked = !!this.prefs.invertY;
     const saveP = () => {

@@ -64,6 +64,7 @@ export class OnlineController {
     on('dropped', () => { if (this.inMatch) this.g.hud?.toast('Conexão perdida. Tentando reconectar…', 4); });
     on('lost', () => this._fatal('Não foi possível reconectar ao servidor. A partida foi encerrada para você.'));
     on('replaced', () => this._fatal('Você conectou em outra aba: esta sessão foi encerrada.'));
+    on('role', this._role);
     on('voice', (m) => this.voice?.onSignal(m));
     on('mimic', (m) => { this.mimic.me = this.me; this.mimic.receive(m); });
   }
@@ -126,11 +127,39 @@ export class OnlineController {
 
   _room(m) {
     this.room = m; this.me = m.you ?? this.me;
-    this.players = new Map(m.members.map(p => [p.id, { name: p.name, status: p.status, online: p.online }]));
+    const mine = m.members.find(p => p.id === this.me);
+    this.myRole = mine?.role;
+    this.players = new Map(m.members.map(p => [p.id, { name: p.name, status: p.status, online: p.online, watcher: !!p.watcher }]));
     if (m.phase === 'lobby' && !this.inMatch) {
       this.ui.showMenu(false); this.ui.showLobby(true); this.ui.lobby(m, this.me);
+      if (this.myRole === 'spectator') $('mmBox').hidden = true;        // espectador nao cede a voz para a criatura
+      else this.mimicUi.refresh();
       if (!this.g.world && !this._loading) this._preload();
-    } else if (this.inMatch) this._roster();
+    } else if (this.inMatch) {
+      // gente entrando/saindo no meio da partida (espectadores): nomes, voz e quadro de jogadores acompanham
+      this.remote?.setPlayers(m.members, this.me); this.voice?.setPlayers(m.members); this._roster();
+    } else if (m.phase === 'playing') {
+      // entrou com a partida em andamento: o estado chega logo depois; enquanto isso o mapa carrega e o aviso aparece
+      this.ui.showMenu(false); this.ui.showLobby(true); this.ui.lobby(m, this.me);
+      this.ui.lobbyStatus('Partida em andamento: preparando o mapa para você assistir…', '');
+      if (!this.g.world && !this._loading) this._preload();
+    }
+  }
+
+  // o servidor passou voce de espectador para jogador (alguem saiu): vale a partir do lobby da proxima rodada
+  _role(m) {
+    if (m.role !== 'player') return;
+    this.ui.lobbyStatus('Abriu uma vaga: você agora é JOGADOR. Marque "Estou pronto".', 'ok');
+    this.g.hud?.toast('Você agora é jogador na próxima rodada.', 5);
+  }
+
+  // aviso antes de sair da sala pelo menu de pausa (so avisa quando faz diferenca)
+  confirmLeave() {
+    if (!this.inMatch || this.ended) return true;
+    const text = this.myRole === 'spectator' || this.players.get(this.me)?.watcher
+      ? 'Sair da sala? Você está só assistindo; ao sair perde seu lugar na fila.'
+      : 'Sair da partida? Seu personagem sai do jogo e a sua vaga vai para o primeiro da fila na próxima rodada. Os outros jogadores continuam.';
+    return confirm(text);
   }
 
   // constroi o mapa enquanto o grupo espera no lobby (nao trava a tela de lobby)
@@ -165,6 +194,7 @@ export class OnlineController {
 
   async _enterWorld(m, fresh) {
     const g = this.g;
+    while (this._loading) await new Promise(r => setTimeout(r, 100));        // o mapa ja esta sendo montado (entrada no lobby / com partida em andamento)
     if (!g.world) await g.load((msg) => this.ui.lobbyStatus('Preparando o mapa: ' + msg, ''), true);
     if (!fresh) return;
     g.mode = 'online'; g.online = this;
@@ -201,7 +231,7 @@ export class OnlineController {
   _applySync(m, fresh) {
     const g = this.g, w = g.world;
     this.me = m.you; this.total = m.total;
-    this.players = new Map(m.players.map(p => [p.id, { name: p.name, status: p.status, online: p.online }]));
+    this.players = new Map(m.players.map(p => [p.id, { name: p.name, status: p.status, online: p.online, watcher: !!p.watcher }]));
     this.remote.setPlayers(m.players, m.you);
     this.voice?.setPlayers(m.players);
     // itens
@@ -229,7 +259,7 @@ export class OnlineController {
     const p = g.player;
     if (!fresh) { p.pos.set(m.pose.x, m.pose.y, m.pose.z); p.vel.set(0, 0); }
     if (m.hidden != null && !p.hidden) g.applyHide(w.hideSpots[m.hidden], true);
-    if (m.status !== 'alive' && !p.ghost) this._becomeGhost(m.status);
+    if (m.status !== 'alive' && !p.ghost) this._becomeGhost(this.players.get(m.you)?.watcher ? 'watch' : m.status);
     this._roster();
   }
 
@@ -462,7 +492,9 @@ export class OnlineController {
     g.flashlight.on = false; g.creatureFx.clear();
     const u = g.post.uniforms; u.ghost.value = 1; u.fade.value = 0; u.pulse.value = 0; u.hideMask.value = 0; u.adapt.value = 0;
     $('spectate').hidden = false;
-    $('spectate').firstChild.textContent = kind === 'escaped' ? 'Você escapou — assistindo os outros' : 'Espírito — você não pode interagir';
+    $('spectate').firstChild.textContent = kind === 'escaped' ? 'Você escapou — assistindo os outros' : kind === 'watch' ? 'Espectador — você joga quando abrir vaga, na próxima rodada' : 'Espírito — você não pode interagir';
+    const hint = $('spectate').querySelector('span');
+    if (hint) { this._hint0 = this._hint0 ?? hint.textContent; hint.textContent = kind === 'watch' ? 'WASD para andar · atravesse paredes · veja os vivos mesmo atrás delas · eles não veem você' : this._hint0; }
     if (g.state === 'dying' || g.state === 'dead') g.state = 'playing';
     this.ghost?.hide();
   }
@@ -518,12 +550,14 @@ export class OnlineController {
     const el = $('roster'); if (!el) return;
     const lines = [];
     for (const [id, p] of this.players) {
-      const cls = [id === this.me ? 'me' : '', p.status === 'dead' || p.status === 'left' ? 'dead' : '', p.online === false ? 'off' : '', this.voice?.speaking?.(id) ? 'talk' : ''].join(' ').trim();
-      const tag = p.status === 'dead' ? ' ✝' : p.status === 'escaped' ? ' ✔' : p.status === 'left' ? ' (saiu)' : p.online === false ? ' (sem conexão)' : '';
+      const cls = [id === this.me ? 'me' : '', (p.status === 'dead' && !p.watcher) || p.status === 'left' ? 'dead' : '', p.watcher ? 'watch' : '', p.online === false ? 'off' : '', this.voiceTalking(id) ? 'talk' : ''].join(' ').trim();
+      const tag = p.status === 'left' ? ' (saiu)' : p.watcher ? ' (espectador)' : p.status === 'dead' ? ' ✝' : p.status === 'escaped' ? ' ✔' : p.online === false ? ' (sem conexão)' : '';
       lines.push(`<div class="${cls}">${p.name.replace(/[&<>]/g, '')}${tag}</div>`);
     }
     el.innerHTML = lines.join('');
   }
+
+  voiceTalking(id) { return this.voice?.speaking?.(id) || (id === this.me && !!this.voice?.mySpeaking); }
 
   _meet(info) {
     const el = $('meet');

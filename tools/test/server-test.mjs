@@ -71,12 +71,14 @@ await section('Salas: criar, listar, entrar por codigo, limite de 4, prontos', a
   ok(/^[A-Z]{4}$/.test(code) && !/[IO]/.test(code), 'codigo de 4 letras (sem I/O): ' + code);
   ok(rs.phase === 'lobby' && rs.host === A.id && rs.members.length === 1 && rs.members[0].name === 'Ana', 'criador e o anfitriao; nome e contagem aparecem');
   B.send({ t: 'rooms' }); const list = await B.next('rooms');
-  ok(list.rooms.length === 1 && list.rooms[0].code === code && list.rooms[0].count === 1 && list.rooms[0].max === 4 && list.rooms[0].phase === 'lobby', 'lista de salas mostra codigo, participantes/4 e estado');
+  ok(list.rooms.length === 1 && list.rooms[0].code === code && list.rooms[0].count === 1 && list.rooms[0].max === 10 && list.rooms[0].maxPlayers === 4 && list.rooms[0].phase === 'lobby', 'lista de salas mostra codigo, participantes/4 e estado');
   B.send({ t: 'join', code: code.toLowerCase() });
   await B.next('room'); C.send({ t: 'join', code }); await C.next('room'); D.send({ t: 'join', code }); const r4 = await D.next('room');
   ok(r4.members.length === 4 && r4.members.map(m => m.name).join() === 'Ana,Beto,Cida,Davi', '4 participantes com nomes');
-  const E = await bot('Eva'); E.send({ t: 'join', code }); const e5 = await E.next('err');
-  ok(e5.code === 'room_full', 'o quinto jogador e recusado (sala cheia)');
+  const E = await bot('Eva'); E.send({ t: 'join', code }); const r5 = await E.next('room');
+  const me5 = r5.members.find(m => m.id === E.id);
+  ok(r5.members.length === 5 && me5.role === 'spectator' && me5.q === 1 && r5.members.filter(m => m.role === 'player').length === 4, 'o quinto entra como ESPECTADOR (fila 1); os 4 primeiros seguem jogadores');
+  E.send({ t: 'leave' }); await E.next('left_room');
   E.send({ t: 'join', code: 'ZZZZ' }); const e6 = await E.next('err'); ok(e6.code === 'no_room', 'codigo inexistente e recusado');
   E.close();
   B.send({ t: 'start' }); const e7 = await B.next('err'); ok(e7.code === 'not_host', 'so o criador inicia');
