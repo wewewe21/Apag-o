@@ -72,7 +72,7 @@ class Objectives {
       P.box(g, M.brass, 0.02, 0.05, 0.02, x, 0.1, -0.03); P.box(g, M.brass, 0.02, 0.05, 0.02, x, -0.06, -0.03);
       const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.018, 10, 8), new THREE.MeshBasicMaterial({ color: 0x5a0a06, toneMapped: false }));
       lamp.position.set(x, 0.22, -0.06); g.add(lamp);
-      const fuse = P.fuseMesh(M); fuse.rotation.set(0, 0, Math.PI / 2); fuse.position.set(x, -0.03, -0.02); fuse.visible = false; g.add(fuse);
+      const fuse = P.fuseMesh(M); fuse.rotation.set(0, 0, Math.PI / 2); fuse.position.set(x - 0.024, -0.03, -0.02);       // (-0,024: a origem do fusivel desceu para a base; o encaixe no quadro continua no mesmo lugar) fuse.visible = false; g.add(fuse);
       this.sockets.push({ lamp, fuse });
     }
     // alavanca
@@ -431,10 +431,9 @@ class Game {
   targets() { return this._targets; }
   onBurnProgress(view, v) { this.hud?.burnMeter(v); }
 
+  // onde a criatura reaparece (respawn/continuar): o ponto de piso do terreo mais longe do jogador (nada de dutos)
   farthestVent(from = this.player.pos) {
-    let best = null, bd = -1;
-    for (const v of this.world.vents) { const d = Math.hypot(v.x - from.x, v.z - from.z); if (d > bd) { bd = d; best = v; } }
-    return best;
+    return this.ai.farthestFloor([{ pos: from }], 1, 0)[0] || null;
   }
 
   // ---------- ruido ----------
@@ -467,7 +466,8 @@ class Game {
       if (ang > allow) continue;
       const clear = this.grid.segmentClear(cam.position.x, cam.position.z, p.x, p.z, true, (b) => b.prop || (it.door && b.door === it.door) || (b.kind === 'drawers'));
       if (!clear) continue;
-      const score = ang / allow + d * 0.15;
+      // itens pequenos (fusivel na cama/maca) ganham de esconderijos grandes quando a mira esta neles
+      const score = (ang / allow) * (it.kind === 'item' ? 0.4 : 1) + d * 0.15;
       if (score < bs) { bs = score; best = it; }
     }
     return best;

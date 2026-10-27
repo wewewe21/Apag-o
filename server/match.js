@@ -141,7 +141,8 @@ export class Match {
   // ---------------- utilidades ----------------
   emit(kind, ...args) { this.events.push([kind, ...args]); }
   aliveList() { return [...this.players.values()].filter(p => p.status === 'alive'); }
-  targets() { return this.views; }
+  // A criatura so enxerga quem esta VIVO: espiritos, escapados e espectadores nem existem para ela (nao distraem, nao atraem, nao sao alvo).
+  targets() { return this.views.filter(v => !v.dead); }
   nameOf(id) { return this.players.get(id)?.name ?? '?'; }
 
   _spawn(p, index) {
@@ -235,8 +236,9 @@ export class Match {
     p.yaw = Number.isFinite(m.yw) ? m.yw : p.yaw;
     p.pitch = clamp(Number.isFinite(m.pt) ? m.pt : p.pitch, -1.5, 1.5);
     const fl = m.fl || [0, 0];
-    p.fl.on = !!fl[0]; p.fl.focus = clamp(+fl[1] || 0, 0, 1);
-    p.holding = !!m.hb;
+    const live = p.status === 'alive';
+    p.fl.on = live && !!fl[0]; p.fl.focus = live ? clamp(+fl[1] || 0, 0, 1) : 0;       // espirito nunca tem lanterna nem prende o folego
+    p.holding = live && !!m.hb;
     if (p.dying) return;
     if (p.status === 'alive') this._aliveState(p, m, dt);
     else this._ghostState(p, m, dt);

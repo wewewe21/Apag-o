@@ -30,6 +30,8 @@ export class World {
     this.dynamic = [];       // objetos com update(dt)
     this.propBoxes = [];     // caixas de colisao/visao dos moveis (o servidor multiplayer recria a mesma colisao a partir delas)
     this.staticRoot = new THREE.Group();
+    this.mergedMeshes = [];        // blocos estaticos fundidos (mesas, bancadas...): superficie para o fusivel
+    this.looseProps = [];          // props fora da fusao estatica (modelos 3D, dinamicos): tambem contam como superficie para o fusivel
     this.rng = mulberry32(1313);
   }
 
@@ -109,6 +111,7 @@ export class World {
     const { g } = res;
     g.position.copy(pos); g.rotation.y = yaw + (g.rotation.y || 0);
     (opts.dynamic || g.userData.glb ? this.scene : this.staticRoot).add(g);          // modelos 3D nao entram na fusao estatica (tem material proprio)
+    if (opts.dynamic || g.userData.glb) this.looseProps.push(g);
     if (opts.collide !== false && res.w) {
       const rot = Math.abs(Math.sin(yaw)) > 0.5;
       const hw = (rot ? res.d : res.w) / 2 + (opts.pad ?? 0), hd = (rot ? res.w : res.d) / 2 + (opts.pad ?? 0);
@@ -471,6 +474,41 @@ export class World {
   }
 
   // ---------- fusiveis sorteados ----------
+  // Pousa o item na superficie REAL (modelos 3D, dobras de lencol, tampos que nao batem com os numeros do mapa, coisas em cima do movel):
+  // procura, perto do ponto esperado, um trecho PLANO e livre (5 raios para baixo concordando) e assenta ali; se nao houver, usa o centro
+  // sem deixar um objeto alto (prateleira, caixa) puxar o fusivel para cima. Nunca fica flutuando nem enterrado.
+  // So mexe na malha; a posicao "oficial" (home / servidor) continua a mesma (o desvio e de no maximo 30 cm).
+  settleItem(it) {
+    if (it.parent || !it.mesh) return false;
+    const m = it.mesh, base = m.position.y, cx = m.position.x, cz = m.position.z;
+    const roots = [...this.mergedMeshes, ...this.looseProps];
+    if (!this._ray) { this._ray = new THREE.Raycaster(); this._down = new THREE.Vector3(0, -1, 0); this._o = new THREE.Vector3(); }
+    const ray = this._ray, yaw = m.rotation.y, ax = Math.cos(yaw), az = -Math.sin(yaw);      // eixo comprido do fusivel
+    const foot = [[0, 0], [0.07, 0], [-0.07, 0], [0, 0.03], [0, -0.03]];
+    this.scene.updateMatrixWorld(true);
+    const drop = (x, z) => {                                                                // primeiro ponto solido de cima para baixo
+      this._o.set(x, base + 0.45, z); ray.set(this._o, this._down); ray.far = 0.8;
+      for (const h of ray.intersectObjects(roots, true)) { if (h.object.isMesh && !h.object.material?.transparent) return h.point.y; }
+      return null;
+    };
+    const probe = (x, z) => foot.map(([u, v]) => drop(x + ax * u - az * v, z + az * u + ax * v));
+    const offsets = [[0, 0]];
+    for (const r of [0.1, 0.2, 0.3]) for (let k = 0; k < 8; k++) offsets.push([Math.cos(k * Math.PI / 4) * r, Math.sin(k * Math.PI / 4) * r]);
+    for (const [dx, dz] of offsets) {
+      const hs = probe(cx + dx, cz + dz);
+      if (hs.some(h => h === null)) continue;
+      const lo = Math.min(...hs), hi = Math.max(...hs);
+      if (hi - lo > 0.02 || lo < base - 0.3 || hi > base + 0.12) continue;                // plano, e perto da altura esperada
+      m.position.set(cx + dx, hi + 0.001, cz + dz);
+      return true;
+    }
+    // sem trecho plano livre: assenta no centro, ignorando o que estiver muito acima do ponto do meio (prateleiras, caixas altas)
+    const hs = probe(cx, cz), c = hs[0];
+    if (c === null || c < base - 0.35 || c > base + 0.3) return false;
+    m.position.y = Math.max(c, ...hs.filter(h => h !== null && h <= c + 0.05)) + 0.001;
+    return true;
+  }
+
   // item de fusivel de numero `id` que esta em uso nesta partida (os "sobrando" ficam escondidos e nao contam)
   fuseItem(id) { return this.items.find(i => i.type === 'fuse' && i.id === id && !i.unused) || null; }
 
@@ -508,6 +546,7 @@ export class World {
       it.unused = false; it.taken = false; it.mesh.visible = true; it.glint.material.opacity = 0;
       it.home.set(a.x, a.y, a.z); it.mesh.position.set(a.x, a.y, a.z);
       it.mesh.rotation.set(0, (a.id * 2.399963) % (Math.PI * 2), 0);
+      this.settleItem(it);
     }
     // fusiveis do cenario que nao receberam ponto (o id foi para a gaveta): somem
     for (const it of this.items) {
@@ -728,7 +767,7 @@ export class World {
     tag(8, 17, [1, 0], 'NOS OLHOS', { w: 1.3, h: 0.4, rot: 0.05 });
     tag(2, 24, [0, 1], 'NÃO APAGUE', { w: 1.4, h: 0.4 });
     tag(20, 11, [0, -1], '13', { w: 0.8, h: 0.8, y: 1.9, font: '700 300px "Special Elite", monospace' });
-    tag(44, 10, [0, 1], 'ELE ANDA PELOS DUTOS', { w: 2.0, h: 0.35, y: -1.2 });
+    tag(44, 10, [0, 1], 'ELE OUVE SEUS PASSOS', { w: 2.0, h: 0.35, y: -1.2 });
     tag(52, 16, [-1, 0], 'NOTURNOS', { w: 1.4, h: 0.4, y: 1.8 });
     tag(34, 22, [1, 0], 'ESCONDA-SE', { w: 1.3, h: 0.35, y: 1.3, color: 'rgba(30,30,30,0.8)' });
     tag(29, 25, [0, 1], 'NÃO OLHE PARA TRÁS', { w: 1.8, h: 0.35, y: 1.9 });
@@ -785,6 +824,7 @@ export class World {
       mesh.castShadow = b.shadow; mesh.receiveShadow = true;
       mesh.matrixAutoUpdate = false;
       this.scene.add(mesh);
+      this.mergedMeshes.push(mesh);
     }
     this.staticRoot.clear();
   }

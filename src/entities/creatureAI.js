@@ -530,25 +530,48 @@ export class CreatureAI {
   retreat(duration) {
     // o diretor manda a criatura para longe (respiro para o jogador)
     if (['chase', 'attack', 'stunned', 'vent', 'dormant'].includes(this.state)) return false;
-    // ela NAO usa dutos (e grande demais para eles): anda, pelo chao, ate o canto do mapa mais longe de TODOS os jogadores vivos
-    // (no solo: do jogador). Os cantos sao os antigos pontos de duto, que ficam espalhados pelo predio.
-    const views = this.aliveViews();
-    const cands = [];
-    for (const v of this.game.world.vents) {
-      let d = Infinity;
-      for (const w of views) d = Math.min(d, Math.hypot(v.x - w.pos.x, v.z - w.pos.z));
-      if (views.length === 0) d = 0;
-      cands.push([d, v]);
-    }
-    cands.sort((a, b) => b[0] - a[0]);
-    for (const [, far] of cands.slice(0, 4)) {
-      const goal = new THREE.Vector3(far.x, far.base, far.z);
+    // ela NAO usa dutos (e grande demais para eles): anda, pelo chao, ate um ponto do mapa longe de TODOS os jogadores vivos (no solo: do jogador)
+    for (const far of this.farthestFloor(this.aliveViews(), 6)) {
+      const goal = new THREE.Vector3(far.x, far.y, far.z);
       if (!this.pathTo(goal, { avoidLight: 3 })) continue;          // sem caminho a pe: tenta o proximo mais longe
       this.setState('patrol'); this.goal = goal; this.firstWalk = true; this._arrived = false; this.pauseT = 0;
       this.pathTo(goal, { avoidLight: 3 });
       return true;
     }
     return false;
+  }
+
+  // Pontos de piso livres (onde o corpo dela cabe) mais distantes de TODAS as visoes dadas, do mais longe para o mais perto.
+  // Usado no respiro e (no solo) para ela reaparecer longe do jogador. Nunca devolve ponto de duto nem fora do predio.
+  farthestFloor(views, n = 1, level = null) {
+    const g = this.grid, out = [];
+    // so celulas que ela alcanca a pe daqui (portas trancadas, como a do subsolo, barram)
+    const [sx, sy] = this.cell(), seen = new Uint8Array(g.W * g.H), stack = [[sx, sy]];
+    seen[g.idx(sx, sy)] = 1;
+    while (stack.length) {
+      const [x, y] = stack.pop();
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx, ny = y + dy;
+        if (!g.inb(nx, ny) || seen[g.idx(nx, ny)] || !g.navWalkable(nx, ny)) continue;
+        seen[g.idx(nx, ny)] = 1; stack.push([nx, ny]);
+      }
+    }
+    for (let y = 0; y < g.H; y++) for (let x = 0; x < g.W; x++) {
+      if (!seen[g.idx(x, y)] || !g.isFloor(x, y)) continue;
+      const zc = g.zoneCfg(x, y);
+      if (!zc || zc.outside) continue;
+      const wx = g.cx(x), wz = g.cz(y), fy = g.floorY(wx, wz);
+      if (level !== null && this.levelOf({ y: fy }) !== level) continue;
+      let d = Infinity;
+      for (const v of views) d = Math.min(d, Math.hypot(wx - v.pos.x, wz - v.pos.z));
+      if (!views.length) d = 0;
+      out.push({ x: wx, y: fy, z: wz, d });
+    }
+    out.sort((a, b) => b.d - a.d);
+    // entre os mais longes, espalha: nao devolve varios pontos vizinhos
+    const picked = [];
+    for (const c of out) { if (picked.every(p => Math.hypot(p.x - c.x, p.z - c.z) > 6)) picked.push(c); if (picked.length >= n) break; }
+    return picked;
   }
 
   // ---------- quadro a quadro ----------

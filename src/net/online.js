@@ -283,7 +283,7 @@ export class OnlineController {
         const w = this.g.world, mesh = item.mesh;
         if (mesh.parent !== w.scene) { mesh.parent?.remove(mesh); w.scene.add(mesh); item.parent = null; }
         const home = item.home;
-        if (!home || Math.hypot(home.x - pos.x, home.z - pos.z) > 0.05 || Math.abs(home.y - pos.y) > 0.05) { mesh.position.set(pos.x, pos.y, pos.z); mesh.rotation.set(0, Math.random() * 6, 0); item.home = new THREE.Vector3(pos.x, pos.y, pos.z); }
+        if (!home || Math.hypot(home.x - pos.x, home.z - pos.z) > 0.05 || Math.abs(home.y - pos.y) > 0.05) { mesh.position.set(pos.x, pos.y, pos.z); mesh.rotation.set(0, Math.random() * 6, 0); item.home = new THREE.Vector3(pos.x, pos.y, pos.z); if (item.type === 'fuse') w.settleItem(item); }
       }
     } else { item.taken = true; item.mesh.visible = false; }
   }

@@ -10,7 +10,7 @@ export function installDebug(game) {
       keys, hits,
       mouse: { dx: 0, dy: 0, left: false, right: false, leftPressed: false, rightPressed: false },
       down: (c) => keys.has(c), hit: (c) => hits.has(c), up: () => false,
-      act: (id) => (defaultBinds()[id] || []).some(c => c && keys.has(c)), actHit: (id) => (defaultBinds()[id] || []).some(c => c && hits.has(c)), actUp: () => false,
+      act: (id) => (defaultBinds()[id] || []).some(c => c && keys.has(c)), actHit: (id) => (defaultBinds()[id] || []).some(c => c && hits.has(c)), actUp: () => false, label: (id) => (defaultBinds()[id] || [''])[0].replace(/^Key/, ''),
       endFrame() { hits.clear(); this.mouse.dx = this.mouse.dy = 0; },
     };
   };

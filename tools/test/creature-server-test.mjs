@@ -248,6 +248,43 @@ await section('Sem dutos: ela e grande demais, nunca entra num duto, mesmo quand
   ok(reached && !vent2, 'destino no subsolo: ela desce a pe pela escada, sem duto');
 });
 
+// ---------------------------------------------------------------------------
+await section('Espiritos, escapados e espectadores nao existem para a criatura (nao distraem, nao atraem, nao sao alvo)', async () => {
+  const dt = 1 / 20;
+  const { bots: [A, B, C], match } = await makeMatch(ctx, 3);
+  const ai = match.ai, g = match.grid, pA = match.players.get(A.id), pB = match.players.get(B.id), pC = match.players.get(C.id);
+  match._wakeCreature(); ai.hardReset(); ai.activate(match.world.creatureSpawn); ai.firstWalk = false; match.freezeAI = false;
+  // B morre (espirito), C escapa; A segue vivo, bem longe (sala do gerador)
+  match._kill(pB); pC.status = 'escaped';
+  const far = match.itemDefs.find(i => i.key === 'fuse:5');
+  pA.pos.set(far.x, far.y, far.z); pA.updateEye();
+  ok(match.targets().length === 1 && match.targets()[0] === pA.view, 'a criatura so recebe o jogador vivo como alvo (espirito e escapado ficam de fora)');
+  ok(ai.aliveViews().length === 1 && ai.nearestView() === pA.view, 'o mais proximo dela e sempre o vivo, mesmo com o espirito colado nela');
+  // o espirito faz de tudo colado nela: anda, corre, "liga a lanterna", clica, tenta abrir porta/gaveta/esconderijo/pegar item
+  const heard = []; const realNoise = match.makeNoise.bind(match);
+  match.makeNoise = (x, z, r, k, fc) => { if (!fc) heard.push([x, z, k]); realNoise(x, z, r, k, fc); };          // (fc = o proprio barulho da criatura, ex.: arrombar porta)
+  let tgtGhost = 0, caughtGhost = 0, flOn = 0;
+  for (let i = 0; i < 20 * 60; i++) {
+    const ang = i * 0.07, gx = ai.pos.x + Math.cos(ang) * 0.8, gz = ai.pos.z + Math.sin(ang) * 0.8;
+    for (const p of [pB, pC]) {
+      if (g.ghostWalkable(gx, gz)) match.onState(p, { x: gx, y: 0, z: gz, yw: ang, pt: 0, cr: 0, mv: 3, fl: [1, 1], hb: 1 });
+      match.noise(p, 'clique'); match.useDoor(p, 0, true); match.hide(p, 0, true); match.useDrawer(p, 5, true); match.takeItem(p, 'fuse:1');
+      if (p.fl.on) flOn++;
+    }
+    match.tick(dt);
+    if (ai.tgt === pB.view || ai.tgt === pC.view) tgtGhost++;
+    if (ai.catchable() === pB.view || ai.catchable() === pC.view) caughtGhost++;
+  }
+  ok(heard.every(h => !['clique', 'porta', 'gaveta', 'esconderijo', 'pegar'].includes(h[2])), `nenhum barulho do espirito chega a criatura (${heard.length} barulhos no total, nenhum de clique/porta/gaveta/esconderijo/pegar)`);
+  ok(tgtGhost === 0 && caughtGhost === 0, 'em 60 s com o espirito colado nela, ela nunca o escolhe como alvo nem consegue "pega-lo"');
+  ok(flOn === 0, 'a lanterna do espirito nunca fica ligada no servidor (nem se o cliente mandar ligada)');
+  ok(pB.status === 'dead' && pC.status === 'escaped' && !pB.carry.size && !pC.carry.size, 'o espirito nao interage com o mundo (nada pego)');
+  // espectador de entrada tardia tambem nao existe para ela
+  const late = { id: 99, name: 'Tarde', conn: null, status: 'alive', hidden: null, pos: new THREE.Vector3(), eye: new THREE.Vector3(), yaw: 0, pitch: 0, crouch: 0, fl: { on: false, focus: 0 }, carry: new Set(), updateEye() {} };
+  match.addWatcher(late);
+  ok(late.status === 'dead' && match.targets().every(v => v.id !== 99), 'espectador (entrou depois) tambem nao e alvo');
+});
+
 console.log(`\nResultado: ${T.pass} ok, ${T.fail} falhas`);
 await ctx.stop();
 process.exit(T.fail ? 1 : 0);

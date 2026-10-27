@@ -507,13 +507,14 @@ export function graffiti(text, opts = {}) {
 }
 
 // ---------- itens coletaveis ----------
+// a origem e a BASE do fusivel (os tampos de latao encostam em y=0): assim ele pousa na superficie em vez de flutuar 2,4 cm acima dela
 export function fuseMesh(M) {
   const g = new THREE.Group();
   const body = new THREE.MeshStandardMaterial({ color: 0xe9e4d4, roughness: 0.3 });
-  cyl(g, body, 0.028, 0.11, 0, 0.055, 0, 0, 0, Math.PI / 2);
-  for (const s of [-1, 1]) { cyl(g, M.brass, 0.031, 0.025, s * 0.065, 0.055, 0, 0, 0, Math.PI / 2); box(g, M.brass, 0.012, 0.05, 0.03, s * 0.085, 0.055, 0); }
+  cyl(g, body, 0.028, 0.11, 0, 0.031, 0, 0, 0, Math.PI / 2);
+  for (const s of [-1, 1]) { cyl(g, M.brass, 0.031, 0.025, s * 0.065, 0.031, 0, 0, 0, Math.PI / 2); box(g, M.brass, 0.012, 0.05, 0.03, s * 0.085, 0.031, 0); }
   const lbl = new THREE.MeshStandardMaterial({ color: 0x8a2a1c, roughness: 0.6 });
-  cyl(g, lbl, 0.0285, 0.03, 0, 0.055, 0, 0, 0, Math.PI / 2);
+  cyl(g, lbl, 0.0285, 0.03, 0, 0.031, 0, 0, 0, Math.PI / 2);
   g.rotation.y = 0.4;
   return g;
 }
