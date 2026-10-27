@@ -213,7 +213,6 @@ export class CreatureAI {
 
   investigate(p, urgent = false) {
     if (['chase', 'stunned', 'attack', 'flee', 'vent', 'inspect'].includes(this.state)) return;
-    if (this.levelOf(p) !== this.level) { this.ventTo(p, 'investigate'); return; }
     if (this.state === 'investigate' && this.sub !== 'look') {
       // ja esta indo (ou virando) para um barulho: so troca o destino, sem reiniciar a "escuta" a cada passo do jogador
       this.goal = p.clone();
@@ -528,42 +527,28 @@ export class CreatureAI {
     return best;
   }
 
-  nearestVent(p, exclude = null) {
-    let best = null, bd = 1e9;
-    for (const v of this.game.world.vents) {
-      if (v === exclude) continue;
-      if (Math.abs(v.base - (p.y < -1.5 ? -4 : 0)) > 1) continue;
-      const d = Math.hypot(v.x - p.x, v.z - p.z);
-      if (d < bd) { bd = d; best = v; }
-    }
-    return best;
-  }
-
-  ventTo(target, then = 'lurk') {
-    const from = this.nearestVent(this.pos);
-    const to = this.nearestVent(target, from);
-    if (!from || !to) return false;
-    this.setState('vent', 'goto');
-    this.vent = { from, to, then, target: target.clone(), t: 0 };
-    this.goal = new THREE.Vector3(from.x, from.base, from.z);
-    return true;
-  }
-
   retreat(duration) {
     // o diretor manda a criatura para longe (respiro para o jogador)
     if (['chase', 'attack', 'stunned', 'vent', 'dormant'].includes(this.state)) return false;
-    // o duto mais longe de TODOS os jogadores vivos (no solo: do jogador)
+    // ela NAO usa dutos (e grande demais para eles): anda, pelo chao, ate o canto do mapa mais longe de TODOS os jogadores vivos
+    // (no solo: do jogador). Os cantos sao os antigos pontos de duto, que ficam espalhados pelo predio.
     const views = this.aliveViews();
-    let far = null, fd = -1;
+    const cands = [];
     for (const v of this.game.world.vents) {
       let d = Infinity;
       for (const w of views) d = Math.min(d, Math.hypot(v.x - w.pos.x, v.z - w.pos.z));
       if (views.length === 0) d = 0;
-      if (d > fd) { fd = d; far = v; }
+      cands.push([d, v]);
     }
-    if (!far) return false;
-    this.lurkTime = duration;
-    return this.ventTo(new THREE.Vector3(far.x, far.base, far.z), 'lurk');
+    cands.sort((a, b) => b[0] - a[0]);
+    for (const [, far] of cands.slice(0, 4)) {
+      const goal = new THREE.Vector3(far.x, far.base, far.z);
+      if (!this.pathTo(goal, { avoidLight: 3 })) continue;          // sem caminho a pe: tenta o proximo mais longe
+      this.setState('patrol'); this.goal = goal; this.firstWalk = true; this._arrived = false; this.pauseT = 0;
+      this.pathTo(goal, { avoidLight: 3 });
+      return true;
+    }
+    return false;
   }
 
   // ---------- quadro a quadro ----------
@@ -610,7 +595,6 @@ export class CreatureAI {
       case 'flee': this.uFlee(dt); break;
       case 'lurk': this.uLurk(dt); break;
       case 'hesitate': this.uHesitate(dt); break;
-      case 'vent': this.uVent(dt); break;
       case 'attack': this.uAttack(dt); break;
     }
 
@@ -649,8 +633,7 @@ export class CreatureAI {
     const oneshotActive = ['recoil', 'attack', 'roar'].includes(m.current) && this.stateT < 0;
     if (this.state === 'stunned' || this.state === 'attack' || oneshotActive) return;
     let clip = null;
-    if (this.state === 'vent' && this.sub !== 'goto') { if (this.sub === 'enter' || this.sub === 'exit') { clip = 'crawl'; } }   // 'goto' = anda ate o duto: usa o andar normal (antes deslizava parada no clipe anterior)
-    else if (this.state === 'inspect' && this.sub === 'listen') clip = 'inspect';
+    if (this.state === 'inspect' && this.sub === 'listen') clip = 'inspect';
     else {
       const cur = m.current;
       const walking = LOCOMOTION.has(cur);
@@ -677,7 +660,6 @@ export class CreatureAI {
       this._arrived = false;
       this.goal = this.firstWalk ? this.goal : this.pickPatrolGoal();
       if (!this.goal) return;
-      if (this.levelOf(this.goal) !== this.level) { this.ventTo(this.goal, 'patrol'); return; }
       if (!this.pathTo(this.goal, { avoidLight: 3 })) { this.goal = null; return; }
     }
     if (this.pauseT > 0) { this.pauseT -= dt; this.moveSpeed = damp(this.moveSpeed, 0, 6, dt); return; }
@@ -794,7 +776,7 @@ export class CreatureAI {
         const e = this.findEdgeNear(target, maxL);
         if (e) { ok = this.pathTo(new THREE.Vector3(e[0], 0, e[1]), { avoidLight: 0.3, maxLight: maxL }); this.pathPartial = true; }
       }
-      if (!ok && this.levelOf(target) !== this.level) { this.ventTo(target, 'search'); return; }
+      if (!ok && this.levelOf(target) !== this.level) { this.setState('search'); this.searchAround(this.pos); return; }
     }
     const atEnd = !this.path.length || this.pathI >= this.path.length;
     if (this.pathPartial && atEnd && this.bash <= 0) {
@@ -816,6 +798,9 @@ export class CreatureAI {
     const p = this.currentTarget();
     this.moveSpeed = damp(this.moveSpeed, 0, 6, dt);
     if (p) this.faceTowards(p.pos.x, p.pos.z, dt, 4);
+    // a luz forte a segura, mas se alguem ENCOSTA nela (ao alcance do bote) ela ataca do mesmo jeito
+    const touched = this.catchable();
+    if (touched) { this.tgt = touched; this.beginAttack(); return; }
     if (this.stateT > 4.5 && this.burstCD <= 0) {
       // estoura a lampada mais proxima e avanca
       const lamp = this.game.lighting.lamps.filter(l => l.on && l.state !== 'dead' && l.type !== 'emerg')
@@ -974,52 +959,6 @@ export class CreatureAI {
     if (this.stateT > (this.lurkTime ?? 8)) {
       if (this.returnToSearch) { this.returnToSearch = false; this.setState('search'); this.searchAround(this.lastSeen); }
       else this.setState('patrol');
-    }
-  }
-
-  uVent(dt) {
-    const v = this.vent;
-    if (!v) { this.setState('patrol'); return; }
-    if (this.sub === 'goto') {
-      if (!this.path.length && this.stateT < 0.3) { if (!this.pathTo(this.goal)) { this.setState('patrol'); return; } }
-      if (this.follow(C.speed.investigate * 1.3, dt) || Math.hypot(v.from.x - this.pos.x, v.from.z - this.pos.z) < 0.9) {
-        this.sub = 'enter'; this.stateT = 0;
-        this.game.audio?.ventRattle(new THREE.Vector3(v.from.x, v.from.base + 0.4, v.from.z));
-      }
-    } else if (this.sub === 'enter') {
-      this.faceTowards(v.from.mouth.x, v.from.mouth.z, dt, 8);
-      this.pos.lerp(new THREE.Vector3(v.from.mouth.x, v.from.base, v.from.mouth.z), Math.min(1, dt * 1.5));
-      this.moveSpeed = 0.5;
-      v.from.grate.rotation.x = -Math.min(1.2, this.stateT * 2);
-      if (this.stateT > 1.1) {
-        this.sub = 'travel'; this.stateT = 0;
-        this.m.group.visible = false; this.visibleModel = false;
-        v.from.grate.rotation.x = 0;
-        v.dur = Math.max(3, Math.hypot(v.to.x - v.from.x, v.to.z - v.from.z) / 7);
-        this.game.audio?.ventTravel(v.from, v.to, v.dur);
-      }
-    } else if (this.sub === 'travel') {
-      if (this.stateT > v.dur) {
-        this.sub = 'exit'; this.stateT = 0;
-        this.pos.set(v.to.mouth.x, v.to.base, v.to.mouth.z);
-        this.yaw = Math.atan2(v.to.x - v.to.mouth.x, v.to.z - v.to.mouth.z);
-        this.m.group.visible = true;
-        this.game.audio?.ventRattle(new THREE.Vector3(v.to.x, v.to.base + 0.4, v.to.z));
-      }
-    } else if (this.sub === 'exit') {
-      v.to.grate.rotation.x = -Math.min(1.2, (1.1 - this.stateT) * 2);
-      this.pos.lerp(new THREE.Vector3(v.to.x, v.to.base, v.to.z), Math.min(1, dt * 1.5));
-      this.moveSpeed = 0.5;
-      if (this.stateT > 1.1) {
-        v.to.grate.rotation.x = 0;
-        this.pos.set(v.to.x, this.grid.floorY(v.to.x, v.to.z), v.to.z);
-        const then = v.then, target = v.target;
-        this.vent = null;
-        if (then === 'investigate') { this.setState('investigate', 'walk'); this.goal = target; }
-        else if (then === 'search') { this.setState('search'); this.searchAround(target); }
-        else if (then === 'lurk') { this.setState('lurk'); }
-        else this.setState('patrol');
-      }
     }
   }
 

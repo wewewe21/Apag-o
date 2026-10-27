@@ -163,10 +163,10 @@ class Objectives {
     g.hud.toast('A trava está carregando. As luzes se foram.', 4);
     g.hud.objective('Sobreviva até a porta destravar.');
     g.makeNoise(this.pos.x, this.pos.z, 60, 'sirene');
-    // traz a criatura para perto se estiver longe
+    // manda a criatura ate o jogador se estiver longe (anda pelo chao e pelas escadas: nao ha dutos)
     const ai = g.ai;
     if (ai.state === 'dormant') ai.activate(g.world.creatureSpawn);
-    if (ai.distToPlayer() > 25 || Math.abs(ai.pos.y - g.player.pos.y) > 2) ai.ventTo(g.player.pos.clone(), 'search');
+    if (ai.distToPlayer() > 25 || Math.abs(ai.pos.y - g.player.pos.y) > 2) ai.investigate(g.player.pos.clone(), true);
     g.stats.chargeStart = g.time;
   }
 

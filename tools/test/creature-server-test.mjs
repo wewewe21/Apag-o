@@ -28,7 +28,7 @@ await section('Movimento: nunca atravessa parede/movel, nao trava, pes acompanha
       tScene = t + 14; const st = states[scene++ % states.length];
       const [cx, cy] = pick(), gx = g.cx(cx), gz = g.cz(cy), [px, py] = pick();
       for (const p of [pA, pB]) { const [qx, qy] = pick(); p.pos.set(g.cx(qx), g.floorY(g.cx(qx), g.cz(qy)), g.cz(qy)); p.updateEye(); }
-      if (ai.level < 0 || ai.vent) { ai.vent = null; const sp = match.world.creatureSpawn; ai.pos.set(sp.x, g.floorY(sp.x, sp.z), sp.z); }
+      if (ai.level < 0) { const sp = match.world.creatureSpawn; ai.pos.set(sp.x, g.floorY(sp.x, sp.z), sp.z); }
       ai.meter = 0; ai.exposure = 0; ai.tgt = null; ai.knowT = 20;
       const V = (x, z) => new THREE.Vector3(x, 0, z);
       if (st === 'patrol') { ai.setState('patrol'); ai.goal = V(gx, gz); ai.pauseT = 0; ai._arrived = false; }
@@ -41,7 +41,7 @@ await section('Movimento: nunca atravessa parede/movel, nao trava, pes acompanha
     if (ai.state === 'chase') ai.knowT = 5;
     const before = { x: ai.pos.x, z: ai.pos.z };
     match.tick(dt);
-    if (ai.state === 'vent' || ai.state === 'dormant') continue;
+    if (ai.state === 'dormant') continue;
     frames++;
     const bp = (() => { const [qx, qz] = g.collideCircle(ai.pos.x, ai.pos.z, C.bodyRadius - 0.06, { ignore: (b) => !!b.door }); return Math.hypot(qx - ai.pos.x, qz - ai.pos.z); })();
     const hd = m.headWorld(new THREE.Vector3());
@@ -165,7 +165,7 @@ const rigLight = async () => {                                   // partida nova
   };
   return { match, ai, g, m, pA, best, z, cxAt, cellOf, light, place };
 };
-await section('Luz forte: encara sem virar de costas, nao persegue por dentro da luz, anda ate o duto com animacao', async () => {
+await section('Luz forte: encara sem virar de costas, nao persegue por dentro da luz, encostar mata', async () => {
   const dt = 1 / 20;
   let { match, ai, g, m, pA, z, cxAt, cellOf, light, place, best } = await rigLight();
   // 1) vem do escuro para um jogador na luz: para na borda, encara (sem o clipe 'look', que gira o quadril ~170 graus) e depois sai
@@ -194,22 +194,58 @@ await section('Luz forte: encara sem virar de costas, nao persegue por dentro da
   let caught = false;
   for (let i = 0; i < 20 * 8 && !caught; i++) { if (ai.state === 'chase') ai.knowT = Math.max(ai.knowT, 1); match.tick(dt); if (ai.state === 'attack') caught = true; }
   ok(caught, 'jogador no escuro (e ela na luz): a caca nao e travada');
-  // 4) anda ate o duto com clipe de andar (antes deslizava no clipe anterior, 'look'/'idle')
+  // 4) ENCOSTAR nela dentro da luz mata: a luz forte so a segura de longe (antes, parada na borda da luz, nada acontecia ao encostar)
   ({ match, ai, g, m, pA, z, cxAt, cellOf, light, place, best } = await rigLight());
-  light(0, 0); place(0, 30, 'patrol');
-  let far = null, fd = -1;
-  for (let i = 0; i < best.n; i++) { let d = 1e9; for (const v of match.world.vents) d = Math.min(d, Math.hypot(v.x - cxAt(i), v.z - z)); if (d > fd) { fd = d; far = i; } }
-  ai.pos.set(cxAt(far), g.floorY(cxAt(far), z), z); m.play('look', 0, { restart: true });
-  const tgt = match.world.vents.reduce((b, v) => (!b || Math.hypot(v.x - cxAt(far), v.z - z) > Math.hypot(b.x - cxAt(far), b.z - z) ? v : b), null);
-  ai.ventTo(new THREE.Vector3(tgt.x, tgt.base, tgt.z), 'lurk');
-  const loco = new Set(['walk', 'limp', 'stalk', 'run', 'crawl', 'creep']);
-  let movingF = 0, noClip = 0, prev = { x: ai.pos.x, z: ai.pos.z };
-  for (let i = 0; i < 20 * 30 && ai.state === 'vent' && ai.sub === 'goto'; i++) {
+  light(6, 14); place(7, 8, 'hesitate');                          // 1 celula (1,25 m) de distancia: dentro do alcance do bote (1,15 m) com o corpo dela
+  ai.pos.x = cxAt(7); pA.pos.x = cxAt(7) + 1.0; pA.updateEye(); ai.tgt = ai.nearestView(); ai.knowT = 5; ai.stateT = 0.5;
+  let touchedKill = false;
+  for (let i = 0; i < 20 * 3 && !touchedKill; i++) { match.tick(dt); if (ai.state === 'attack') touchedKill = true; }
+  ok(touchedKill, 'jogador encostou nela dentro da luz forte: ela ataca');
+  ({ match, ai, g, m, pA, z, cxAt, cellOf, light, place, best } = await rigLight());
+  light(6, 14); place(7, 11, 'hesitate');                         // 4 celulas (5 m): longe, a luz segura
+  let farAttack = false;
+  for (let i = 0; i < 20 * 3; i++) { match.tick(dt); if (ai.state === 'attack') farAttack = true; }
+  ok(!farAttack, 'jogador a 5 m dela dentro da luz forte: continua protegido');
+});
+
+// ---------------------------------------------------------------------------
+await section('Sem dutos: ela e grande demais, nunca entra num duto, mesmo quando mandada embora ou para outro andar', async () => {
+  const dt = 1 / 20;
+  const { bots: [A, B], match } = await makeMatch(ctx, 2);
+  const ai = match.ai, g = match.grid, pA = match.players.get(A.id), pB = match.players.get(B.id);
+  ok(typeof ai.ventTo === 'undefined' && typeof ai.uVent === 'undefined', 'a funcao de entrar no duto foi removida da IA');
+  match._wakeCreature(); ai.hardReset(); ai.activate(match.world.creatureSpawn); ai.firstWalk = false; match.freezeAI = false;
+  // respiro do diretor: ela ANDA ate um canto longe dos jogadores (antes sumia por um duto)
+  const sp = match.world.playerStart;
+  for (const p of [pA, pB]) { p.pos.set(sp.x, g.floorY(sp.x, sp.z), sp.z); p.updateEye(); }
+  const from = { x: ai.pos.x, z: ai.pos.z };
+  const went = ai.retreat(30);
+  ok(went === true && ai.state === 'patrol' && ai.path.length > 0, `respiro: ela anda pelo chao ate um canto longe (estado ${ai.state}, ${ai.path.length} pontos)`);
+  let seenVent = false, maxJump = 0, last = { x: ai.pos.x, z: ai.pos.z }, farthest = 0;
+  for (let i = 0; i < 20 * 120; i++) {
     match.tick(dt);
-    const sp = Math.hypot(ai.pos.x - prev.x, ai.pos.z - prev.z) / dt; prev = { x: ai.pos.x, z: ai.pos.z };
-    if (ai.sub === 'goto' && sp > 0.5 && sp < 12) { movingF++; if (!loco.has(m.current)) noClip++; }
+    if (ai.state === 'vent') seenVent = true;
+    maxJump = Math.max(maxJump, Math.hypot(ai.pos.x - last.x, ai.pos.z - last.z)); last = { x: ai.pos.x, z: ai.pos.z };
+    farthest = Math.max(farthest, Math.hypot(ai.pos.x - sp.x, ai.pos.z - sp.z));
   }
-  ok(movingF > 20 && noClip / movingF < 0.1, `a caminho do duto ela anda com animacao (${noClip} de ${movingF} quadros em movimento sem clipe de andar)`);
+  ok(!seenVent, 'em 2 minutos de jogo ela nunca entrou em estado de duto');
+  ok(maxJump < 0.5, `nunca some e reaparece (maior deslocamento num passo: ${maxJump.toFixed(2)} m)`);
+  ok(farthest > 15, `ela se afastou de verdade dos jogadores (${farthest.toFixed(0)} m)`);
+  // alvo em OUTRO andar: ela vai a pe pela escada (antes entrava num duto). A porta do subsolo trancada continua barrando a criatura.
+  const M2 = await makeMatch(ctx, 2);                      // partida nova: nos 2 minutos acima ela pode ter pego os jogadores
+  const ai2 = M2.match.ai, pA2 = M2.match.players.get(M2.bots[0].id);
+  for (const d of M2.match.world.doors) if (d.kind === 'K') d.locked = false;
+  M2.match._wakeCreature(); ai2.hardReset(); ai2.activate(M2.match.world.creatureSpawn); ai2.firstWalk = false;
+  const down = M2.match.world.itemDefs.find(i => i.type === 'fuse' && i.y < -1) || M2.match.world.itemDefs.find(i => i.y < -1);
+  const tgt = new THREE.Vector3(down.x, down.y, down.z);
+  pA2.pos.copy(tgt); pA2.updateEye();
+  ai2.setState('patrol'); ai2.goal = tgt.clone(); ai2.firstWalk = true; ai2.pauseT = 0; ai2._arrived = false;
+  let reached = false, vent2 = false;
+  for (let i = 0; i < 20 * 240 && !reached; i++) {
+    M2.match.tick(dt); if (ai2.state === 'vent') vent2 = true;
+    if (ai2.pos.y < -3 && Math.hypot(ai2.pos.x - tgt.x, ai2.pos.z - tgt.z) < 6) reached = true;
+  }
+  ok(reached && !vent2, 'destino no subsolo: ela desce a pe pela escada, sem duto');
 });
 
 console.log(`\nResultado: ${T.pass} ok, ${T.fail} falhas`);

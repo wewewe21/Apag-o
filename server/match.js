@@ -362,7 +362,7 @@ export class Match {
       const ai = this.ai;
       if (ai.state === 'dormant') ai.activate(this.world.creatureSpawn);
       const tgt = ai.nearestView();
-      if (tgt && (ai.distToPlayer() > 25 || Math.abs(ai.pos.y - tgt.pos.y) > 2)) ai.ventTo(tgt.pos.clone(), 'search');
+      if (tgt && (ai.distToPlayer() > 25 || Math.abs(ai.pos.y - tgt.pos.y) > 2)) ai.investigate(tgt.pos.clone(), true);       // anda ate la (sem dutos)
       this.makeNoise(this.world.panel.x, this.world.panel.z, 60, 'sirene');
     }
     this.room.broadcast({ t: 'unlock' });
@@ -645,7 +645,6 @@ export class Match {
       t: R2(ai.stateT), lw: R2(m.lookWeight), en: ai.enraged ? 1 : 0,
     };
     if (look && m.lookWeight > 0.01) c.lk = [R2(look.x), R2(look.y), R2(look.z)];
-    if (ai.state === 'vent' && ai.vent) c.vt = [ai.vent.from.id, ai.vent.to.id];
     return c;
   }
 
